@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:naru}
+    username: ${DB_USERNAME:naru}
+    password: ${DB_PASSWORD}
+  sql:
+    init:
+      mode: never
