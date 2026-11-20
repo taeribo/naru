@@ -6,7 +6,7 @@ A는 3D·에셋, B는 클라이언트, C는 백엔드·DB·운영을 맡는 권�
 | --- | --- | --- | --- | --- | --- |
 | 1. MySQL 개발 경로 확인 (완료) | C | `compose.mysql.yaml`, `backend/src/main/resources/application-mysql.yml` | Docker 접근, 로컬 DB용 환경값 | Spring에서 개발 MySQL에 연결할 수 있고 기본 무DB 기동도 유지 | 별도 개발 환경의 JDBC `SELECT 1`, Compose Health, 기존 MockMvc |
 | 2. 세로 광장과 벚꽃잎 연출 | A | `frontend/src/scenes/`, `frontend/public/models/` | 레퍼런스 구도, 임시 에셋 규칙 | 세로·가로에서 나무와 돌광장을 확인하고 교체 가능한 에셋 구조와 제한된 파티클 구성 확보 | 브라우저 뷰포트와 스마트폰 터치·프레임 측정 |
-| 3. 풍등 저장·페이지·이벤트 | C | `backend/src/main/java/kr/naru/`, DB 마이그레이션, `backend/src/test/` | 1, 소원 ERD와 REST·이벤트 계약 검토, 마이그레이션 실행 승인 | MySQL 익명 저장, 최신순 페이지, 유효성 검증, 커밋 후 이벤트 및 신고·숨김 계약 | DB·REST·WebSocket 통합, 재기동 후 조회, 숨김 시 공개 제외 |
+| 3. 풍등 저장·페이지·이벤트 | C | `backend/src/main/java/kr/naru/`, DB 마이그레이션, `backend/src/test/` | 1, [초기 ERD v1.0](NARU_ARCHITECTURE.md#초기-erd-v10) 및 REST·이벤트 계약 검토, 마이그레이션 실행 승인 | MySQL 익명 저장, 최신순 페이지, 유효성 검증, 커밋 후 이벤트 및 신고·숨김 계약 | DB·REST·WebSocket 통합, 재기동 후 조회, 숨김 시 공개 제외 |
 | 4. 풍등 실시간 목록 | B | `frontend/src/features/WishPanel.tsx`, `frontend/src/services/` | 3의 인터페이스 합의 후 모의 데이터로 병렬 개발 | 최신순 페이지, 실시간 중복 방지, 오류·재연결 처리, 등록 성공마다 2초 연출 | 두 브라우저 등록·수신, 오프라인 재연결 및 페이지 경계 확인 |
 | 5. 8개 카테고리 운세 | B·C | `frontend/src/features/`, 별도 문구 데이터, 백엔드 운세 모듈 | 카테고리 계약, 문구 검수. DB 엔티티는 ERD 검토 이후 | 무료·무제한, 카테고리별 무작위 문구 | 8개 선택과 반복 실행, 빈 데이터 처리 |
 | 6. 공간·이동·재접속 | C·B·A | 백엔드 공간·WebSocket 모듈, 프론트 통신 서비스와 캐릭터 장면 | WebSocket 계약, 공용 캐릭터 좌표 | 26명 개설, 30명 정원, 운영 상한, 대기열, 복귀와 이동 동기화 | 동시 접속 경계와 연결 해제·복귀 테스트 |
