@@ -1,0 +1,10 @@
+.gradle
+build
+out
+.env
+.env.*
+.idea
+.DS_Store
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties

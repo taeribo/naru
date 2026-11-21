@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: naru-backend
+
+---
+spring:
+  config:
+    activate:
+      on-profile: "!mysql"
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
