@@ -29,7 +29,8 @@ class WishControllerTest {
                         .content("{\"author\":\"%s\",\"message\":\"  모두 건강하기를  \"}".formatted(AUTHOR)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("모두 건강하기를"))
-                .andExpect(jsonPath("$.author").doesNotExist());
+                .andExpect(jsonPath("$.author").doesNotExist())
+                .andExpect(jsonPath("$.createdAt").isString());
 
         mvc.perform(get(PATH).param("author", VISITOR))
                 .andExpect(status().isOk())
@@ -37,12 +38,22 @@ class WishControllerTest {
 
         mvc.perform(get(PATH).param("author", AUTHOR))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$[?(@.message == '모두 건강하기를')]").isEmpty());
+    }
+
+    @Test
+    void acceptsTwoHundredUnicodeCodePoints() throws Exception {
+        String message = "🌸".repeat(200);
+        mvc.perform(post(PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"author\":\"%s\",\"message\":\"%s\"}".formatted("c".repeat(32), message)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value(message));
     }
 
     @Test
     void rejectsBlankAndOversizeMessages() throws Exception {
-        for (String message : new String[] { "   ", "x".repeat(121) }) {
+        for (String message : new String[] { "   ", "🌸".repeat(201) }) {
             mvc.perform(post(PATH)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"author\":\"%s\",\"message\":\"%s\"}".formatted(AUTHOR, message)))

@@ -43,7 +43,7 @@ docker compose -f compose.yaml -f compose.mysql.yaml up --build -d --wait
 docker compose -f compose.yaml -f compose.mysql.yaml ps
 ```
 
-MySQL은 사용자 계정으로 `SELECT 1`을 실행할 수 있을 때 준비 상태가 됩니다. 백엔드는 그 이후 시작하며, `mysql` Spring 프로필에서 JDBC로 `SELECT 1`을 실행합니다. 성공하면 백엔드 로그에 `MySQL JDBC connection verified`가 표시됩니다. DB는 Compose 내부 네트워크에서 접근하고 데이터는 `mysql-data` 볼륨에 저장합니다. MySQL 이미지는 새 데이터 볼륨을 처음 초기화할 때 계정과 비밀번호를 적용합니다. 현재 소원 API는 서버 메모리를 사용합니다.
+MySQL은 사용자 계정으로 `SELECT 1`을 실행할 수 있을 때 준비 상태가 됩니다. 백엔드는 그 이후 시작하며, `mysql` Spring 프로필에서 JDBC로 `SELECT 1`을 실행합니다. 성공하면 백엔드 로그에 `MySQL JDBC connection verified`가 표시됩니다. DB는 Compose 내부 네트워크에서 접근하고 데이터는 `mysql-data` 볼륨에 저장합니다. MySQL 이미지는 새 데이터 볼륨을 처음 초기화할 때 계정과 비밀번호를 적용합니다. MySQL 연결만 켠 경우 소원 API는 기본 메모리 저장소를 사용합니다. 영속 저장은 다음 절의 별도 프로필로 켭니다.
 
 중지할 때 구성 파일을 동일하게 지정합니다.
 
@@ -51,6 +51,18 @@ MySQL은 사용자 계정으로 `SELECT 1`을 실행할 수 있을 때 준비 �
 docker compose -f compose.yaml -f compose.mysql.yaml down
 ```
 
+
+## 풍등 소원 MySQL 저장
+
+기본 Compose와 `mysql` 프로필은 기존 개발 환경처럼 메모리 소원 저장소를 사용합니다. MySQL에 소원을 저장하려면 적용이 승인된 빈 개발 DB에 [초기 스키마](../backend/db/migrations/V001__lantern_persistence.sql)를 한 번 적용한 뒤, 루트 `.env`에서 `NARU_MYSQL_PROFILES=mysql,wish-persistence`로 설정하고 MySQL Compose를 실행합니다. 애플리케이션은 SQL을 자동 실행하지 않습니다.
+
+```sh
+docker compose -f compose.yaml -f compose.mysql.yaml up --build -d --wait
+```
+
+서버는 멀티플레이어 공간 배정 전까지 기본 1번 공간을 사용합니다. 목록은 기존처럼 전체 공개 소원 중 본인의 글을 제외한 최신 30건을 반환합니다. 화면과 API 모두 유니코드 코드 포인트 기준 200자를 허용합니다. 등록·조회 응답의 `id`는 문자열이고, `createdAt`은 UTC 시각입니다.
+
+MySQL에는 현재 브라우저 작성자 키의 SHA-256 해시를 저장합니다. 이 값은 목록에서 자신의 글을 제외하기 위한 임시 연결 키입니다. 세션 행의 만료 시각은 작성 후 기본 24시간으로 기록하며, 인증이나 자동 삭제에 사용하지 않습니다. 소원 기록의 기본 만료 시각은 비어 있습니다. 메모리 저장에 남아 있던 소원은 새 DB로 이전하지 않습니다.
 
 ## 후원 UI
 

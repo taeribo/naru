@@ -1,7 +1,7 @@
 services:
   backend:
     environment:
-      SPRING_PROFILES_ACTIVE: mysql
+      SPRING_PROFILES_ACTIVE: ${NARU_MYSQL_PROFILES:-mysql}
       DB_HOST: mysql
       DB_PORT: "3306"
       DB_NAME: ${DB_NAME:-naru}
