@@ -1,6 +1,7 @@
 export interface Wish {
   id: string
   message: string
+  createdAt: string
 }
 
 const AUTHOR_KEY = 'naru.wishAuthor'

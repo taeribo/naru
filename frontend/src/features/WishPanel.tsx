@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { getWishAuthor, readWishes, sendWish } from '../services/wishes'
 import type { Wish } from '../services/wishes'
 
-const MESSAGE_LIMIT = 120
+const MESSAGE_LIMIT = 200
 const REFRESH_INTERVAL = 8_000
 
 export function WishPanel({
@@ -19,6 +19,8 @@ export function WishPanel({
   const [listStatus, setListStatus] = useState('소원을 불러오는 중…')
   const [sendError, setSendError] = useState('')
   const [sending, setSending] = useState(false)
+  const trimmed = message.trim()
+  const messageLength = Array.from(trimmed).length
 
   useEffect(() => {
     if (!open) return
@@ -54,8 +56,7 @@ export function WishPanel({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const trimmed = message.trim()
-    if (!trimmed || sending) return
+    if (!trimmed || messageLength > MESSAGE_LIMIT || sending) return
 
     setSending(true)
     setSendError('')
@@ -77,19 +78,22 @@ export function WishPanel({
         <textarea
           id="wish-message"
           rows={3}
-          maxLength={MESSAGE_LIMIT}
+          aria-describedby="wish-message-length"
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           placeholder="풍등에 담아 보낼 소원을 적어 주세요."
           required
         />
+        <small id="wish-message-length">
+          {messageLength} / {MESSAGE_LIMIT}자
+        </small>
         <div className="wish-form-footer">
           <small>다른 방문자도 볼 수 있어요.</small>
           <button
             className="plaza-button"
-            disabled={sending || !message.trim()}
+            disabled={sending || !trimmed || messageLength > MESSAGE_LIMIT}
           >
-            {sending ? '보내는 중…' : '전송'}
+            {sending ? '보내는 중…' : '풍등 띄우기'}
           </button>
         </div>
         {sendError && <p role="alert">{sendError}</p>}
