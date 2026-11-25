@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Nanum Brush Script';
+  src: url('../assets/fonts/NanumBrushScript-Regular.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 .plaza-panel.fortune-dialog::backdrop {
   background: rgb(18 11 30 / 44%);
 }
@@ -167,11 +175,17 @@
 }
 
 .fortune-paper-message {
-  margin: 0;
+  max-inline-size: min(100%, 14em);
+  margin: 0 auto;
   font-family:
-    'Nanum Myeongjo', 'AppleMyungjo', 'Batang', 'Noto Serif CJK KR', serif;
-  font-size: clamp(1.05rem, 3vw, 1.36rem);
-  line-height: 1.8;
+    'Yoon 성광체 가로', '윤 성광체 가로', '성광체 가로', 'Nanum Brush Script',
+    'AppleMyungjo', 'Batang', 'Noto Serif CJK KR', serif;
+  font-size: clamp(1.65rem, 4.4vw, 2rem);
+  font-weight: 400;
+  -webkit-text-stroke: 0.5px currentColor;
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
   overflow-wrap: anywhere;
   white-space: pre-line;
   word-break: keep-all;

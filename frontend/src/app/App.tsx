@@ -3,17 +3,22 @@ import { FortunePanel } from '../features/FortunePanel'
 import { useWorld } from '../services/world'
 import { DonationDialog } from '../features/DonationDialog'
 import { WishPanel } from '../features/WishPanel'
+import { PlazaMovement } from '../scenes/PlazaMovement'
+import type { PlazaDirection } from '../scenes/PlazaMovement'
 import { PlazaScene } from '../scenes/PlazaScene'
+import type { PlazaZone } from '../scenes/PlazaZones'
 import './app.css'
 
 export function App() {
-  const [panel, setPanel] = useState<'fortune' | 'wish' | null>(null)
+  const [panel, setPanel] = useState<PlazaZone | null>(null)
   const [closingFortune, setClosingFortune] = useState(false)
   const closeTimer = useRef<number | undefined>(undefined)
   const world = useWorld()
   const [launchId, setLaunchId] = useState<number | null>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const launchCount = useRef(0)
+  const cameraBearing = useRef(0)
+  const ownPlayer = world.players.find((player) => player.id === world.id)
 
   useEffect(() => {
     if (panel && !dialog.current?.open) dialog.current?.showModal()
@@ -51,12 +56,28 @@ export function App() {
     setPanel((current) => (current === 'wish' ? null : current))
   }
 
+  function moveInDirection(direction: PlazaDirection) {
+    if (world.status !== 'joined' || !ownPlayer || panel) return
+    const angle =
+      cameraBearing.current +
+      { up: Math.PI, left: -Math.PI / 2, down: 0, right: Math.PI / 2 }[
+        direction
+      ]
+    const x = Math.max(-16, Math.min(16, ownPlayer.x + Math.sin(angle) * 1.4))
+    const z = Math.max(-4, Math.min(11, ownPlayer.z + Math.cos(angle) * 1.4))
+    world.move(x, z)
+  }
+
   return (
     <main className="plaza">
       <PlazaScene
         launchId={launchId}
         onComplete={() => setLaunchId(null)}
         world={world}
+        onOpenZone={setPanel}
+        onCameraBearing={(bearing) => {
+          cameraBearing.current = bearing
+        }}
       />
       <header className="plaza-header">
         <h1>나루</h1>
@@ -76,6 +97,10 @@ export function App() {
         </nav>
         <DonationDialog />
       </header>
+      <PlazaMovement
+        disabled={world.status !== 'joined' || !ownPlayer || panel !== null}
+        onMove={moveInDirection}
+      />
       <p className="world-help">
         {world.status === 'joined' && (
           <span>{world.room}번 공간 · 바닥을 눌러 이동 · </span>

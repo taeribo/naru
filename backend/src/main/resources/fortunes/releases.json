@@ -1,0 +1,16 @@
+[
+  {
+    "version": "v2",
+    "effectiveFrom": "2026-11-25",
+    "keyId": "V1",
+    "weights": {
+      "HOPE": 30,
+      "ADVICE": 30,
+      "COMFORT": 20,
+      "REFLECTION": 15,
+      "CAUTION": 5
+    },
+    "file": "messages-v2.json",
+    "sha256": "2645925d3d5e2d053c460fb2e2517f8936a05c06fdac2445ce27e5716fb0733a"
+  }
+]

@@ -54,6 +54,31 @@ class WorldRoomsTest {
         assertThat(world.peers(joined(initial, "c1").token())).contains("c2").doesNotContain("returning", "c1");
     }
 
+    @Test
+    void restoresQueuePositionAfterBriefDisconnect() {
+        IntStream.rangeClosed(1, 62).forEach(index -> world.join("c" + index, null));
+        var first = waiting(world.tick(System.currentTimeMillis()), "c61");
+
+        world.leave("c61");
+        assertThat(waiting(world.tick(System.currentTimeMillis()), "c62").position()).isEqualTo(1);
+
+        world.join("returning", first.token());
+        var returned = world.tick(System.currentTimeMillis());
+        assertThat(waiting(returned, "returning")).isEqualTo(first);
+        assertThat(waiting(returned, "c62").position()).isEqualTo(2);
+    }
+
+    @Test
+    void expiresDisconnectedQueueMembersWhenOpeningASeat() {
+        IntStream.rangeClosed(1, 62).forEach(index -> world.join("c" + index, null));
+        world.tick(System.currentTimeMillis());
+
+        world.leave("c1");
+        world.leave("c61");
+        var released = world.tick(System.currentTimeMillis() + 15_000);
+        assertThat(joined(released, "c62").room()).isEqualTo(1);
+    }
+
     private static WorldRooms.Joined joined(List<WorldRooms.Delivery> messages, String connection) {
         return (WorldRooms.Joined) messages.stream()
                 .filter(message -> message.connections().contains(connection) && message.event() instanceof WorldRooms.Joined)
