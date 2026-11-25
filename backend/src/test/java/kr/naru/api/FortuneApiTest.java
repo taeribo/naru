@@ -12,26 +12,43 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "NARU_FORTUNE_KEY_V1=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
 @AutoConfigureMockMvc
 class FortuneApiTest {
+    private static final String VISITOR_ID = "a7b7af5d-4bd9-437a-a744-baa9a929e182";
+
     @Autowired
     private MockMvc mvc;
 
     @Test
-    void exposesEightCategoriesAndAllowsRepeatedReadings() throws Exception {
-        mvc.perform(get("/api/fortunes"))
+    void listsEightCategoriesAndProvidesPrivateDailyResults() throws Exception {
+        mvc.perform(get("/api/fortunes/categories"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(8));
+                .andExpect(jsonPath("$.length()").value(8))
+                .andExpect(jsonPath("$[7].code").value("GROWTH"));
 
-        for (String code : new String[] {"LOVE", "WEALTH", "HEALTH", "CAREER", "FAMILY", "STUDY",
-                "RELATIONSHIP", "GENERAL", "LOVE"}) {
-            mvc.perform(get("/api/fortunes/{code}", code))
+        for (String code : new String[] {"GENERAL", "LOVE", "WEALTH", "CAREER", "HEALTH", "FAMILY",
+                "RELATIONSHIP", "GROWTH"}) {
+            mvc.perform(get("/api/fortunes/daily").param("category", code).header("X-Visitor-Id", VISITOR_ID))
                     .andExpect(status().isOk())
-                    .andExpect(header().string("Cache-Control", "no-store"))
-                    .andExpect(jsonPath("$.code").value(code))
-                    .andExpect(jsonPath("$.message").value(containsString("\n")));
+                    .andExpect(header().string("Cache-Control", containsString("no-store")))
+                    .andExpect(header().string("Cache-Control", containsString("private")))
+                    .andExpect(jsonPath("$.category").value(code))
+                    .andExpect(jsonPath("$.date").isString())
+                    .andExpect(jsonPath("$.content").value(containsString("\n")));
         }
-        mvc.perform(get("/api/fortunes/UNKNOWN")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/fortunes/STUDY").header("X-Visitor-Id", VISITOR_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("GROWTH"));
+    }
+
+    @Test
+    void rejectsUnsupportedCategoriesAndInvalidOrMissingVisitorIds() throws Exception {
+        mvc.perform(get("/api/fortunes/daily").param("category", "UNKNOWN").header("X-Visitor-Id", VISITOR_ID))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/fortunes/daily").param("category", "LOVE"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/fortunes/daily").param("category", "LOVE").header("X-Visitor-Id", "invalid"))
+                .andExpect(status().isBadRequest());
     }
 }
