@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { subscribeToWishUpdates } from '../services/wishUpdates'
 import { readWishPage } from '../services/wishes'
 import type { WishPage } from '../services/wishes'
 
-const REFRESH_INTERVAL = 8_000
 const EMPTY_PAGE: WishPage = { items: [], nextCursor: null }
 const LOADING_MESSAGE = '소원을 불러오는 중…'
+const RETRY_DELAY = 8_000
 
 export function WishList({ author }: { author: string }) {
   const [page, setPage] = useState(EMPTY_PAGE)
@@ -19,30 +20,43 @@ export function WishList({ author }: { author: string }) {
 
     const controller = new AbortController()
     let pending = false
+    let queued = false
+    let retryTimer: number | undefined
 
     async function refresh() {
-      if (pending) return
-      pending = true
-      try {
-        const latest = await readWishPage(author, controller.signal)
-        if (controller.signal.aborted) return
-        setPage(latest)
-        setListStatus(
-          latest.items.length ? '' : '아직 다른 사람이 남긴 소원이 없어요.',
-        )
-      } catch {
-        if (!controller.signal.aborted)
-          setListStatus('소원 목록을 불러오지 못했습니다.')
-      } finally {
-        pending = false
+      if (controller.signal.aborted) return
+      if (pending) {
+        queued = true
+        return
       }
+
+      pending = true
+      do {
+        window.clearTimeout(retryTimer)
+        queued = false
+        try {
+          const latest = await readWishPage(author, controller.signal)
+          if (controller.signal.aborted) break
+          setPage(latest)
+          setListStatus(
+            latest.items.length ? '' : '아직 다른 사람이 남긴 소원이 없어요.',
+          )
+        } catch {
+          if (!controller.signal.aborted) {
+            setListStatus('소원 목록을 불러오지 못했습니다.')
+            retryTimer = window.setTimeout(() => void refresh(), RETRY_DELAY)
+          }
+        }
+      } while (queued && !controller.signal.aborted)
+      pending = false
     }
 
     void refresh()
-    const timer = window.setInterval(refresh, REFRESH_INTERVAL)
+    const unsubscribe = subscribeToWishUpdates(() => void refresh())
     return () => {
       controller.abort()
-      window.clearInterval(timer)
+      window.clearTimeout(retryTimer)
+      unsubscribe()
     }
   }, [author, expanded])
 

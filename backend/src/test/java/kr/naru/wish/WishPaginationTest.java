@@ -18,7 +18,7 @@ class WishPaginationTest {
     private static final String VISITOR = "b".repeat(32);
 
     private final WishStore store = new InMemoryWishStore();
-    private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new WishController(store)).build();
+    private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new WishController(store, event -> {})).build();
     private final ObjectMapper json = new ObjectMapper();
 
     @Test

@@ -3,6 +3,8 @@ package kr.naru.api;
 import kr.naru.wish.WishStore;
 import kr.naru.wish.WishStore.Cursor;
 import kr.naru.wish.WishStore.Wish;
+import kr.naru.wish.realtime.WishCreated;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +36,11 @@ public class WishController {
 
     private final WishStore store;
 
-    public WishController(WishStore store) {
+    private final ApplicationEventPublisher events;
+
+    public WishController(WishStore store, ApplicationEventPublisher events) {
         this.store = store;
+        this.events = events;
     }
 
     @GetMapping
@@ -98,7 +103,9 @@ public class WishController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A wish must contain 1 to 200 characters");
         }
 
-        return store.create(request.author(), message);
+        Wish wish = store.create(request.author(), message);
+        events.publishEvent(new WishCreated());
+        return wish;
     }
 
     private static void validateAuthor(String author) {
