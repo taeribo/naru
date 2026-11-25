@@ -178,6 +178,12 @@ textarea:focus-visible {
   list-style: none;
 }
 
+.wish-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .wish-list li {
   padding: 0.55rem 0.7rem;
   border-radius: 0.45rem;

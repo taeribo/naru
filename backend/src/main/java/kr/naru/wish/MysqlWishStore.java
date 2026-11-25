@@ -18,7 +18,16 @@ import java.util.List;
 @Repository
 @Profile("mysql & wish-persistence")
 class MysqlWishStore implements WishStore {
-    private static final int LIST_SIZE = 30;
+    private static final String PUBLIC_FEED = """
+            SELECT message.id, message.content, message.created_at
+            FROM lantern_messages message
+            LEFT JOIN visitor_sessions viewer
+              ON viewer.token_hash = ? AND viewer.id = message.session_id
+            WHERE message.status = 'VISIBLE'
+              AND (message.expires_at IS NULL OR message.expires_at > UTC_TIMESTAMP(3))
+              AND viewer.id IS NULL
+            """;
+    private static final String FEED_ORDER = " ORDER BY message.created_at DESC, message.id DESC LIMIT ?";
     private static final RowMapper<Wish> WISH_ROW = (row, index) -> new Wish(
             row.getString("id"),
             row.getString("content"),
@@ -37,18 +46,19 @@ class MysqlWishStore implements WishStore {
     }
 
     @Override
-    public List<Wish> listFor(String author) {
-        return jdbc.query("""
-                SELECT message.id, message.content, message.created_at
-                FROM lantern_messages message
-                LEFT JOIN visitor_sessions viewer
-                  ON viewer.token_hash = ? AND viewer.id = message.session_id
-                WHERE message.status = 'VISIBLE'
-                  AND (message.expires_at IS NULL OR message.expires_at > UTC_TIMESTAMP(3))
-                  AND viewer.id IS NULL
-                ORDER BY message.created_at DESC, message.id DESC
-                LIMIT ?
-                """, WISH_ROW, hash(author), LIST_SIZE);
+    public List<Wish> listFor(String author, Cursor before, int limit) {
+        String authorHash = hash(author);
+        if (before == null) {
+            return jdbc.query(PUBLIC_FEED + FEED_ORDER, WISH_ROW, authorHash, limit);
+        }
+        if (before.id().length() == 36) {
+            return List.of(); // A cursor from the memory store cannot address MySQL rows.
+        }
+        LocalDateTime timestamp = LocalDateTime.ofInstant(before.createdAt(), ZoneOffset.UTC);
+        return jdbc.query(PUBLIC_FEED + """
+                AND (message.created_at < ?
+                     OR (message.created_at = ? AND message.id < CAST(? AS UNSIGNED)))
+                """ + FEED_ORDER, WISH_ROW, authorHash, timestamp, timestamp, before.id(), limit);
     }
 
     @Override

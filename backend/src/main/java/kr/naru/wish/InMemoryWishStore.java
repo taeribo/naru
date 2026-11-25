@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.UUID;
@@ -13,16 +14,21 @@ import java.util.UUID;
 @Profile("!(mysql & wish-persistence)")
 class InMemoryWishStore implements WishStore {
     private static final int MAX_WISHES = 100;
-    private static final int LIST_SIZE = 30;
+    private static final Comparator<Wish> FEED_ORDER =
+            Comparator.comparing(Wish::createdAt).thenComparing(Wish::id).reversed();
 
     private final Deque<StoredWish> wishes = new ArrayDeque<>();
 
     @Override
-    public synchronized List<Wish> listFor(String author) {
+    public synchronized List<Wish> listFor(String author, Cursor before, int limit) {
         return wishes.stream()
                 .filter(wish -> !wish.author().equals(author))
-                .limit(LIST_SIZE)
                 .map(StoredWish::wish)
+                .filter(wish -> before == null
+                        || wish.createdAt().isBefore(before.createdAt())
+                        || (wish.createdAt().equals(before.createdAt()) && wish.id().compareTo(before.id()) < 0))
+                .sorted(FEED_ORDER)
+                .limit(limit)
                 .toList();
     }
 
