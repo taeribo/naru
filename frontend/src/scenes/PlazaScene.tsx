@@ -1,3 +1,6 @@
+import { CherryPetals } from './CherryPetals'
+import { PlazaVisitors } from './PlazaVisitors'
+import type { WorldPlayer } from '../services/world'
 import { OrbitControls, Stars } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useRef, useState } from 'react'
@@ -236,7 +239,13 @@ function Pavilion({
   )
 }
 
-function RisingLantern({ onComplete }: { onComplete: () => void }) {
+function RisingLantern({
+  onComplete,
+  offset = 0,
+}: {
+  onComplete: () => void
+  offset?: number
+}) {
   const group = useRef<Group>(null)
   const elapsed = useRef(0)
 
@@ -245,7 +254,7 @@ function RisingLantern({ onComplete }: { onComplete: () => void }) {
     elapsed.current = Math.min(2, elapsed.current + delta)
     const progress = elapsed.current / 2
     group.current.position.set(
-      3.9 + Math.sin(progress * Math.PI) * 0.6,
+      3.9 + offset + Math.sin(progress * Math.PI) * 0.6,
       1.15 + progress * 7.8,
       3.2 - progress * 2.5,
     )
@@ -254,12 +263,22 @@ function RisingLantern({ onComplete }: { onComplete: () => void }) {
   })
 
   return (
-    <group ref={group} position={[3.9, 1.15, 3.2]}>
+    <group ref={group} position={[3.9 + offset, 1.15, 3.2]}>
       <Lantern scale={1.36} />
-      <pointLight color="#ff9a43" intensity={11} distance={5} />
+      {offset === 0 && (
+        <pointLight color="#ff9a43" intensity={11} distance={5} />
+      )}
     </group>
   )
 }
+
+const PLAZA_CAMERA = {
+  position: [0, 5.65, 22] as [number, number, number],
+  fov: 56,
+  near: 0.1,
+  far: 130,
+}
+const CAMERA_TARGET: [number, number, number] = [0, 3.85, 0]
 
 function supportsWebGl() {
   try {
@@ -275,9 +294,17 @@ function supportsWebGl() {
 export function PlazaScene({
   launchId,
   onComplete,
+  world,
 }: {
   launchId: number | null
   onComplete: () => void
+  world: {
+    players: WorldPlayer[]
+    id: string | null
+    lanterns: string[]
+    finishLantern: (id: string) => void
+    move: (x: number, z: number) => void
+  }
 }) {
   const [canRender] = useState(supportsWebGl)
   if (!canRender) {
@@ -289,9 +316,8 @@ export function PlazaScene({
   return (
     <Canvas
       className="plaza-canvas"
-      camera={{ position: [0, 5.65, 22], fov: 56, near: 0.1, far: 130 }}
+      camera={PLAZA_CAMERA}
       dpr={[1, 1.5]}
-      frameloop={launchId === null ? 'demand' : 'always'}
       fallback={
         <p className="world-fallback">3D 장면을 보려면 WebGL 2가 필요합니다.</p>
       }
@@ -316,6 +342,12 @@ export function PlazaScene({
         <meshBasicMaterial color="#ffdfa6" toneMapped={false} />
       </mesh>
       <StonePlaza />
+      <CherryPetals />
+      <PlazaVisitors
+        players={world.players}
+        ownId={world.id}
+        onMove={world.move}
+      />
       <CherryTree />
       <Pavilion position={[-8.7, 0, -6.8]} angle={0.37} />
       <Pavilion position={[8.4, 0, -8]} angle={-0.42} />
@@ -349,8 +381,15 @@ export function PlazaScene({
       {launchId !== null && (
         <RisingLantern key={launchId} onComplete={onComplete} />
       )}
+      {world.lanterns.map((id) => (
+        <RisingLantern
+          key={`remote-${id}`}
+          offset={1 + (id.charCodeAt(id.length - 1) % 6) * 0.55}
+          onComplete={() => world.finishLantern(id)}
+        />
+      ))}
       <OrbitControls
-        target={[0, 3.85, 0]}
+        target={CAMERA_TARGET}
         enableDamping
         enablePan={false}
         minDistance={10}

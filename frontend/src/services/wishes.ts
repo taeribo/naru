@@ -41,11 +41,15 @@ export async function readWishPage(
   return response.json()
 }
 
-export async function sendWish(author: string, message: string) {
+export async function sendWish(
+  author: string,
+  message: string,
+  roomToken: string | null,
+) {
   const response = await fetch('/api/wishes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ author, message }),
+    body: JSON.stringify({ author, message, roomToken }),
   })
   if (!response.ok) throw new Error('소원을 보내지 못했습니다.')
 }

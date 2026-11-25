@@ -63,7 +63,7 @@ class MysqlWishStore implements WishStore {
 
     @Override
     @Transactional
-    public Wish create(String author, String message) {
+    public Wish create(String author, String message, Integer assignedRoom) {
         String authorHash = hash(author);
         jdbc.update("""
                 INSERT INTO visitor_sessions (token_hash, created_at, last_seen_at, expires_at)
@@ -79,7 +79,7 @@ class MysqlWishStore implements WishStore {
                 FROM rooms room
                 CROSS JOIN visitor_sessions visitor
                 WHERE room.room_number = ? AND visitor.token_hash = ?
-                """, message, roomNumber, authorHash);
+                """, message, assignedRoom == null ? roomNumber : assignedRoom, authorHash);
         if (inserted != 1) {
             throw new IllegalStateException("The configured wish room is missing");
         }
