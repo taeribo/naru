@@ -102,7 +102,7 @@ class FortuneCatalog {
             for (FortuneCategory category : FortuneCategory.values()) {
                 for (FortuneTone tone : FortuneTone.values()) {
                     if ((weight(tone) > 0 && pool(category, tone).isEmpty())
-                            || (definition.version().equals("v1") && pool(category, tone).size() != weight(tone))) {
+                            || (definition.version().equals("v2") && pool(category, tone).size() != weight(tone))) {
                         throw new IllegalStateException("Incomplete catalog: " + category + "/" + tone);
                     }
                 }

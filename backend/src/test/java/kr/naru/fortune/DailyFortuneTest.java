@@ -43,15 +43,21 @@ class DailyFortuneTest {
         var first = catalog.forDate(FIRST_DAY);
         var reordered = new ArrayList<>(first.messages());
         Collections.reverse(reordered);
-        var same = new FortuneCatalog.Release(definition("v1", FIRST_DAY, first), reordered);
-        var future = new FortuneCatalog.Release(definition("v2", FIRST_DAY.plusDays(1), first), first.messages());
+        var same = new FortuneCatalog.Release(definition("v2", FIRST_DAY, first), reordered);
+        var future = new FortuneCatalog.Release(definition("v3", FIRST_DAY.plusDays(1), first), first.messages());
         var extended = new FortuneCatalog(List.of(future, same));
         var instant = Instant.parse("2026-11-25T14:59:59Z");
         assertThat(service(extended).draw(VISITOR, FortuneCategory.LOVE, instant))
                 .isEqualTo(service(catalog).draw(VISITOR, FortuneCategory.LOVE, instant));
-        assertThat(extended.forDate(FIRST_DAY.plusDays(1)).version()).isEqualTo("v2");
-        assertThatThrownBy(() -> new FortuneCatalog.Release(definition("v2", FIRST_DAY, first), List.of()))
+        assertThat(extended.forDate(FIRST_DAY.plusDays(1)).version()).isEqualTo("v3");
+        assertThatThrownBy(() -> new FortuneCatalog.Release(definition("v3", FIRST_DAY, first), List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void bundlesOnlyTheRevisedCatalogForPreview() {
+        assertThat(catalog.all()).extracting(FortuneCatalog.Release::version).containsExactly("v2");
+        assertThat(catalog.forDate(FIRST_DAY).messages()).hasSize(800);
     }
 
     @Test
