@@ -4,6 +4,11 @@ export interface Wish {
   createdAt: string
 }
 
+export interface WishPage {
+  items: Wish[]
+  nextCursor: string | null
+}
+
 const AUTHOR_KEY = 'naru.wishAuthor'
 
 export function getWishAuthor() {
@@ -21,11 +26,14 @@ export function getWishAuthor() {
   return author
 }
 
-export async function readWishes(
+export async function readWishPage(
   author: string,
   signal: AbortSignal,
-): Promise<Wish[]> {
-  const response = await fetch(`/api/wishes?author=${author}`, {
+  cursor?: string,
+): Promise<WishPage> {
+  const params = new URLSearchParams({ author })
+  if (cursor) params.set('cursor', cursor)
+  const response = await fetch(`/api/wishes/page?${params}`, {
     signal,
     cache: 'no-store',
   })
