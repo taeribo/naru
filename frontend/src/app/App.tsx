@@ -56,22 +56,31 @@ export function App() {
       <PlazaScene
         launchId={launchId}
         onComplete={() => setLaunchId(null)}
+        onSelectZone={(zone) => {
+          if (zone === 'wish' && launchId !== null) return
+          setPanel(zone)
+        }}
         world={world}
       />
       <header className="plaza-header">
         <h1>나루</h1>
         <nav aria-label="나루 체험">
-          <button className="plaza-button" onClick={() => setPanel('fortune')}>
+          <button
+            className="plaza-button plaza-button--menu"
+            onClick={() => setPanel('fortune')}
+          >
             <span aria-hidden="true">☾</span> 운세보기
+            <span aria-hidden="true" className="plaza-chevron">›</span>
           </button>
           <button
-            className="plaza-button"
+            className="plaza-button plaza-button--menu"
             disabled={launchId !== null}
             onClick={() => {
               setPanel('wish')
             }}
           >
             <span aria-hidden="true">◇</span> 풍등날리기
+            <span aria-hidden="true" className="plaza-chevron">›</span>
           </button>
         </nav>
         <DonationDialog />

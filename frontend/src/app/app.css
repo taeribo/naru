@@ -261,3 +261,54 @@ textarea:focus-visible {
   display: flex;
   margin: 1rem auto 0;
 }
+
+.zone-label {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid #c99a6c;
+  border-radius: 999px;
+  background: #382345d9;
+  color: #ffe3b0;
+  font: inherit;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.zone-label strong {
+  font-size: 0.95rem;
+}
+
+.zone-label span {
+  font-size: 0.72rem;
+  color: #f1d9bd;
+}
+
+.zone-label:hover {
+  background: #563653;
+}
+
+.plaza-button--menu {
+  justify-content: space-between;
+  min-width: 9.5rem;
+  background: #2a1646cc;
+  border-color: #d8b07a;
+  box-shadow:
+    inset 0 0 0 2px #d8b07a2b,
+    0 0 14px #b080ff44;
+}
+
+.plaza-chevron {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.plaza-header h1::after {
+  content: '';
+  display: block;
+  width: 7.5rem;
+  height: 2px;
+  margin: 0.15rem auto 0;
+  background: linear-gradient(90deg, transparent, #ffe2a2, transparent);
+}
