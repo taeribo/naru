@@ -1,0 +1,246 @@
+.plaza-panel.fortune-dialog::backdrop {
+  background: rgb(18 11 30 / 44%);
+}
+
+.fortune-dialog[data-closing='true'] {
+  animation: fortune-exit 200ms ease-in both;
+}
+
+.fortune-dialog[data-closing='true']::backdrop {
+  animation: fortune-exit 200ms ease-in both;
+}
+
+.fortune-panel {
+  margin-block-start: 1rem;
+}
+
+.fortune-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.fortune-dialog:has(.fortune-paper-stage) {
+  width: min(42rem, calc(100% - 1.25rem));
+  padding: 0.4rem;
+  border: 0;
+  background: transparent;
+}
+
+.fortune-dialog:has(.fortune-paper-stage) .panel-heading {
+  justify-content: flex-end;
+}
+
+.fortune-dialog:has(.fortune-paper-stage) .panel-heading h2 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.fortune-dialog:has(.fortune-paper-stage) .panel-heading button {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.fortune-paper-stage {
+  padding: 0.75rem 0.35rem 0.5rem;
+  text-align: center;
+}
+
+.fortune-paper-space {
+  position: relative;
+  display: grid;
+  min-height: 8.75rem;
+  place-items: center;
+}
+
+.fortune-fold {
+  position: absolute;
+  z-index: 1;
+  width: 5.1rem;
+  min-height: 3.05rem;
+  padding: 0;
+  border: 0;
+  border-radius: 40% 24% 30% 23% / 12% 16% 10% 8%;
+  background:
+    linear-gradient(
+      105deg,
+      transparent 48%,
+      #88674426 50%,
+      #fff5dc 53%,
+      transparent 68%
+    ),
+    linear-gradient(18deg, #d9c5a3, #f9edd6 67%, #ede0c4);
+  cursor: pointer;
+  transform: rotate(-6deg);
+  animation: fortune-appear 250ms ease-out both;
+}
+
+.fortune-fold::after {
+  position: absolute;
+  inset: auto 0.15rem 0.3rem;
+  height: 31%;
+  border-radius: 40% 0 46% 14%;
+  background: linear-gradient(178deg, #b8a17b22, #a5845629, #f5e4c7ad);
+  content: '';
+}
+
+.fortune-fold:focus-visible {
+  outline: 2px solid #ffe3b0;
+  outline-offset: 5px;
+}
+
+.fortune-paper-stage[data-phase='unfolding'] .fortune-fold {
+  animation: fortune-exit 260ms ease-out both;
+  pointer-events: none;
+}
+
+.fortune-paper-unfold {
+  position: relative;
+  width: 100%;
+}
+
+.fortune-paper-stage[data-phase='unfolding'] .fortune-paper-unfold {
+  animation: fortune-unfold var(--unfold-duration)
+    cubic-bezier(0.2, 0.68, 0.24, 1) both;
+}
+
+.fortune-paper {
+  display: grid;
+  box-sizing: border-box;
+  min-height: 8.75rem;
+  align-items: center;
+  padding: clamp(1.15rem, 5vw, 2.2rem);
+  background:
+    repeating-linear-gradient(107deg, #9e83500b 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(13deg, transparent 0 11px, #fffdf43b 11px 12px),
+    radial-gradient(ellipse at 40% 40%, #fff8e6 10%, #f0e3c7 100%);
+  color: #432e2b;
+  clip-path: polygon(
+    0.4% 3%,
+    5% 1.8%,
+    11% 2.6%,
+    20% 1%,
+    32% 1.8%,
+    45% 0.6%,
+    56% 1.7%,
+    67% 0.7%,
+    77% 2%,
+    86% 0.9%,
+    96% 2.2%,
+    99.1% 1.5%,
+    99.8% 16%,
+    99.3% 40%,
+    100% 64%,
+    99.2% 82%,
+    99.7% 97%,
+    95% 98.6%,
+    82% 97.8%,
+    73% 99.4%,
+    60% 98.2%,
+    49% 99.2%,
+    34% 98.5%,
+    23% 99.9%,
+    13% 98.8%,
+    0.8% 99%,
+    0.2% 76%,
+    0.6% 56%,
+    0 33%
+  );
+}
+
+.fortune-paper-unfold::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #825a3937, transparent 22% 78%, #825a3937);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fortune-paper-stage[data-phase='unfolding'] .fortune-paper-unfold::after {
+  animation: fortune-crease var(--unfold-duration) ease-out both;
+}
+
+.fortune-paper-message {
+  margin: 0;
+  font-family:
+    'Nanum Myeongjo', 'AppleMyungjo', 'Batang', 'Noto Serif CJK KR', serif;
+  font-size: clamp(1.05rem, 3vw, 1.36rem);
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+  word-break: keep-all;
+  animation: fortune-appear 300ms ease-out both;
+}
+
+.fortune-paper-message:focus {
+  outline: none;
+}
+
+.fortune-paper-note {
+  min-height: 1.7em;
+  margin: 0.75rem 0 0;
+  color: #f3e5d6;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.fortune-paper-caption {
+  animation: fortune-appear 450ms ease-out both;
+}
+
+@keyframes fortune-unfold {
+  0% {
+    clip-path: inset(0 47%);
+    transform: perspective(650px) rotateY(-17deg) rotateZ(-3deg);
+  }
+  56% {
+    clip-path: inset(0 13%);
+    transform: perspective(650px) rotateY(5deg) rotateZ(0.5deg);
+  }
+  100% {
+    clip-path: inset(0);
+    transform: none;
+  }
+}
+
+@keyframes fortune-crease {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fortune-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fortune-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fortune-fold,
+  .fortune-paper-stage *,
+  .fortune-dialog,
+  .fortune-dialog::backdrop {
+    animation: none !important;
+  }
+}

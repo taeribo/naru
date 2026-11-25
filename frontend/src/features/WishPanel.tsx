@@ -8,9 +8,11 @@ const MESSAGE_LIMIT = 200
 export function WishPanel({
   open,
   onLaunch,
+  roomToken,
 }: {
   open: boolean
   onLaunch: () => void
+  roomToken: string | null
 }) {
   const [author] = useState(getWishAuthor)
   const [message, setMessage] = useState('')
@@ -26,7 +28,7 @@ export function WishPanel({
     setSending(true)
     setSendError('')
     try {
-      await sendWish(author, trimmed)
+      await sendWish(author, trimmed, roomToken)
       setMessage('')
       onLaunch()
     } catch {

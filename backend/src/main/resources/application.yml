@@ -2,6 +2,10 @@ spring:
   application:
     name: naru-backend
 
+naru:
+  world:
+    max-rooms: ${NARU_WORLD_MAX_ROOMS:2}
+
 ---
 spring:
   config:

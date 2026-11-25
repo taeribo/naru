@@ -33,7 +33,7 @@ class InMemoryWishStore implements WishStore {
     }
 
     @Override
-    public synchronized Wish create(String author, String message) {
+    public synchronized Wish create(String author, String message, Integer assignedRoom) {
         Wish wish = new Wish(UUID.randomUUID().toString(), message, Instant.now());
         wishes.addFirst(new StoredWish(author, wish));
         if (wishes.size() > MAX_WISHES) {

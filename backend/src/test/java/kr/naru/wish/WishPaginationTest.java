@@ -3,6 +3,7 @@ package kr.naru.wish;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.naru.api.WishController;
+import kr.naru.world.WorldRooms;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -18,7 +19,7 @@ class WishPaginationTest {
     private static final String VISITOR = "b".repeat(32);
 
     private final WishStore store = new InMemoryWishStore();
-    private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new WishController(store, event -> {})).build();
+    private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new WishController(store, event -> {}, new WorldRooms(2))).build();
     private final ObjectMapper json = new ObjectMapper();
 
     @Test

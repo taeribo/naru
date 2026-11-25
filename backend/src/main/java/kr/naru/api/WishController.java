@@ -4,6 +4,7 @@ import kr.naru.wish.WishStore;
 import kr.naru.wish.WishStore.Cursor;
 import kr.naru.wish.WishStore.Wish;
 import kr.naru.wish.realtime.WishCreated;
+import kr.naru.world.WorldRooms;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,10 +38,12 @@ public class WishController {
     private final WishStore store;
 
     private final ApplicationEventPublisher events;
+    private final WorldRooms rooms;
 
-    public WishController(WishStore store, ApplicationEventPublisher events) {
+    public WishController(WishStore store, ApplicationEventPublisher events, WorldRooms rooms) {
         this.store = store;
         this.events = events;
+        this.rooms = rooms;
     }
 
     @GetMapping
@@ -103,8 +106,9 @@ public class WishController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A wish must contain 1 to 200 characters");
         }
 
-        Wish wish = store.create(request.author(), message);
-        events.publishEvent(new WishCreated());
+        Integer room = rooms.roomFor(request.roomToken());
+        Wish wish = store.create(request.author(), message, room);
+        events.publishEvent(new WishCreated(wish.id(), room == null ? null : request.roomToken()));
         return wish;
     }
 
@@ -116,5 +120,5 @@ public class WishController {
 
     public record WishPage(List<Wish> items, String nextCursor) {}
 
-    public record WishRequest(String author, String message) {}
+    public record WishRequest(String author, String message, String roomToken) {}
 }
