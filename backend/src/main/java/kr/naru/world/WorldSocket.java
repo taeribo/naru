@@ -2,10 +2,8 @@ package kr.naru.world;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kr.naru.wish.realtime.WishCreated;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -72,12 +70,6 @@ public class WorldSocket extends TextWebSocketHandler {
         }
     }
 
-    @TransactionalEventListener(fallbackExecution = true)
-    public void wishCreated(WishCreated event) throws IOException {
-        List<String> peers = rooms.peers(event.roomToken());
-        if (!peers.isEmpty()) send(peers, new Lantern("lantern", event.wishId()));
-    }
-
     private void send(List<String> recipients, Object payload) throws IOException {
         TextMessage message = new TextMessage(json.writeValueAsString(payload));
         for (String id : recipients) {
@@ -101,6 +93,4 @@ public class WorldSocket extends TextWebSocketHandler {
             // Transport cleanup can already be in progress.
         }
     }
-
-    record Lantern(String type, String id) {}
 }

@@ -7,11 +7,11 @@ const MESSAGE_LIMIT = 200
 
 export function WishPanel({
   open,
-  onLaunch,
+  onHang,
   roomToken,
 }: {
   open: boolean
-  onLaunch: () => void
+  onHang: () => void
   roomToken: string | null
 }) {
   const [author] = useState(getWishAuthor)
@@ -30,9 +30,9 @@ export function WishPanel({
     try {
       await sendWish(author, trimmed, roomToken)
       setMessage('')
-      onLaunch()
+      onHang()
     } catch {
-      setSendError('소원을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.')
+      setSendError('소원패를 걸지 못했습니다. 잠시 후 다시 시도해 주세요.')
     } finally {
       setSending(false)
     }
@@ -48,7 +48,7 @@ export function WishPanel({
           aria-describedby="wish-message-length"
           value={message}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder="풍등에 담아 보낼 소원을 적어 주세요."
+          placeholder="소원패에 적을 소원을 남겨 주세요."
           required
         />
         <small id="wish-message-length">
@@ -60,7 +60,7 @@ export function WishPanel({
             className="plaza-button"
             disabled={sending || !trimmed || messageLength > MESSAGE_LIMIT}
           >
-            {sending ? '보내는 중…' : '풍등 띄우기'}
+            {sending ? '거는 중…' : '소원패 걸기'}
           </button>
         </div>
         {sendError && <p role="alert">{sendError}</p>}

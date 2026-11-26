@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import {
-  AdditiveBlending,
   BoxGeometry,
   BufferGeometry,
   Color,
@@ -12,7 +11,7 @@ import {
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { CASTLE_POSITION } from './Castle'
-import { Plaza, PondDecor } from './Pond'
+import { Plaza } from './StoneCourtyard'
 import { Stairs } from './Stairs'
 import { roofGeometry } from './shapes'
 import {
@@ -34,14 +33,13 @@ function createRandom(seed: number) {
 
 const FLOWER_MIX = ['#ff7fb8', '#ff9fcb', '#ffd0e4', '#ffffff', '#f060a0']
 
-/** 광택 판석 바닥, 연못과 다리, 바닥에 흩어진 꽃잎. */
+/** 판석 바닥과 바닥에 흩어진 꽃잎. */
 export function Ground() {
   const petal = useMemo(getPetalTexture, [])
 
   return (
     <>
       <Plaza />
-      <PondDecor />
       <Stairs />
       <instancedMesh
         args={[undefined, undefined, 420]}
@@ -181,78 +179,12 @@ export function FlowerBed() {
   )
 }
 
-/** 석등: 돌 받침 위에 나무틀과 한지로 빛나는 사각 등. */
-export function StoneLantern({
-  position,
-  scale = 1,
-  light = false,
-}: {
-  position: [number, number, number]
-  scale?: number
-  light?: boolean
-}) {
-  const halo = useMemo(getGlowTexture, [])
-  return (
-    <group position={position} scale={scale}>
-      <mesh position-y={0.25}>
-        <boxGeometry args={[1.0, 0.5, 1.0]} />
-        <meshStandardMaterial color="#a89bb4" roughness={0.9} />
-      </mesh>
-      <mesh position-y={0.58}>
-        <boxGeometry args={[0.82, 0.16, 0.82]} />
-        <meshStandardMaterial color="#9487a1" roughness={0.9} />
-      </mesh>
-      <mesh position-y={1.12}>
-        <boxGeometry args={[0.52, 0.6, 0.52]} />
-        <meshBasicMaterial color="#ffd488" toneMapped={false} />
-      </mesh>
-      {[-1, 1].flatMap((x) =>
-        [-1, 1].map((z) => (
-          <mesh key={`${x}${z}`} position={[x * 0.27, 1.12, z * 0.27]}>
-            <boxGeometry args={[0.06, 0.66, 0.06]} />
-            <meshStandardMaterial color="#6a3a22" />
-          </mesh>
-        )),
-      )}
-      <mesh position-y={1.46}>
-        <boxGeometry args={[0.66, 0.07, 0.66]} />
-        <meshStandardMaterial color="#6a3a22" />
-      </mesh>
-      <mesh position-y={1.76} rotation-y={Math.PI / 4}>
-        <coneGeometry args={[0.58, 0.45, 4]} />
-        <meshStandardMaterial color="#5a2f1c" roughness={0.8} />
-      </mesh>
-      <sprite position-y={1.15} scale={[3.2, 3.2, 1]}>
-        <spriteMaterial
-          map={halo}
-          color="#ffb04a"
-          opacity={0.6}
-          blending={AdditiveBlending}
-          transparent
-          depthWrite={false}
-          fog={false}
-        />
-      </sprite>
-      {light && (
-        <pointLight
-          position-y={1.2}
-          color="#ffb056"
-          intensity={16}
-          distance={9}
-        />
-      )}
-    </group>
-  )
-}
-
-/** 한옥·목조 건물 마을: 돌 기단, 기둥, 창살 창, 들린 처마의 기와지붕. */
 function buildVillage() {
   const random = createRandom(23)
   const walls: BufferGeometry[] = []
   const roofs: BufferGeometry[] = []
   const wood: BufferGeometry[] = []
   const stone: BufferGeometry[] = []
-  const lanterns: Matrix4[] = []
   const wallHeight = 1.8
   const stride = 2.5
 
@@ -279,7 +211,7 @@ function buildVillage() {
     const yaw = -side * (0.15 + random() * 0.3)
     if (Math.hypot(x - CASTLE_POSITION[0], z - CASTLE_POSITION[1]) < 24)
       continue
-    // 연못(맨 위) 뒤쪽 멀리에만 마을을 둔다.
+    // 광장 뒤쪽 멀리에 마을을 둔다.
     if (Math.abs(x) < 30 || z > -40) continue
     const building = new Matrix4().makeRotationY(yaw).setPosition(x, ground, z)
 
@@ -316,20 +248,6 @@ function buildVillage() {
           )
         }
       }
-      for (let slot = -1; slot <= 1; slot += 1) {
-        lanterns.push(
-          building
-            .clone()
-            .multiply(
-              new Matrix4().makeTranslation(
-                slot * w * 0.33,
-                base + wallHeight - 0.3,
-                d / 2 + 0.9,
-              ),
-            )
-            .multiply(new Matrix4().makeScale(0.22, 0.3, 0.22)),
-        )
-      }
       place(
         wood,
         new BoxGeometry(w + 0.35, 0.16, d + 0.35),
@@ -359,11 +277,10 @@ function buildVillage() {
     roofs: merge(roofs),
     wood: merge(wood),
     stone: merge(stone),
-    lanterns,
   }
 }
 
-/** 뒤쪽 언덕 위 한옥 마을(불 켜진 창살 창), 먼 산, 보랏빛 구름. */
+/** 뒤쪽 언덕 위 마을(불 켜진 창살 창), 먼 산, 보랏빛 구름. */
 export function Village() {
   const halo = useMemo(getGlowTexture, [])
   const facade = useMemo(getFacadeTexture, [])
@@ -392,20 +309,6 @@ export function Village() {
       <mesh geometry={village.wood}>
         <meshStandardMaterial color="#5a2f20" roughness={0.9} />
       </mesh>
-      <instancedMesh
-        args={[undefined, undefined, village.lanterns.length]}
-        frustumCulled={false}
-        ref={(mesh) => {
-          if (!mesh) return
-          village.lanterns.forEach((matrix, index) =>
-            mesh.setMatrixAt(index, matrix),
-          )
-          mesh.instanceMatrix.needsUpdate = true
-        }}
-      >
-        <sphereGeometry args={[1, 10, 8]} />
-        <meshBasicMaterial color="#ff4a35" toneMapped={false} />
-      </instancedMesh>
       <mesh geometry={village.roofs}>
         <meshStandardMaterial
           map={tiles}

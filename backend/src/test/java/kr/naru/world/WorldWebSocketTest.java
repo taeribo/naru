@@ -34,7 +34,7 @@ class WorldWebSocketTest {
     private TestRestTemplate http;
 
     @Test
-    void capsRoomsAndScopesMovementAndLanternsToPeersInTheSameRoom() throws Exception {
+    void capsRoomsAndScopesMovementAndDoesNotPublishWishAnimations() throws Exception {
         var client = HttpClient.newHttpClient();
         var visitors = new ArrayList<Visitor>();
         try {
@@ -76,17 +76,18 @@ class WorldWebSocketTest {
             assertThat(resumed.await(event -> is(event, "joined"))).isEqualTo(mover.assignment);
 
             var response = http.postForEntity("/api/wishes",
-                    Map.of("author", "47".repeat(16), "message", "공간별 풍등 이벤트 확인", "roomToken", token),
+                    Map.of("author", "47".repeat(16), "message", "소원패 공개 등록 확인", "roomToken", token),
                     JsonNode.class);
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
             String wishId = response.getBody().path("id").asText();
-            assertThat(peer.await(event -> is(event, "lantern")).path("id").asText()).isEqualTo(wishId);
+            var page = http.getForEntity("/api/wishes/page?author=" + "65".repeat(16), JsonNode.class);
+            assertThat(page.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(page.getBody().path("items").toString()).contains(wishId);
 
-            // Process another broadcast in room two before inspecting its event queue.
-            String otherId = otherRoom.assignment.path("id").asText();
-            otherRoom.send(Map.of("type", "move", "x", 0, "z", 10.5));
-            assertThat(otherRoom.await(event -> event.path("id").asText().equals(wishId)
-                    || (is(event, "snapshot") && hasPosition(event, otherId, 10.5))).path("type").asText())
+            // The world socket should send the next position snapshot without a wish animation.
+            resumed.send(Map.of("type", "move", "x", 0, "z", 12));
+            assertThat(peer.await(event -> event.path("id").asText().equals(wishId)
+                    || (is(event, "snapshot") && hasPosition(event, moverId, 12))).path("type").asText())
                     .isEqualTo("snapshot");
         } finally {
             visitors.forEach(visitor -> visitor.socket.abort());

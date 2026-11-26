@@ -33,7 +33,7 @@ class WorldRoomsTest {
     }
 
     @Test
-    void reconnectsToOriginalRoomAndKeepsMovementAndLanternsRoomScoped() {
+    void reconnectsToOriginalRoomAndKeepsMovementRoomScoped() {
         IntStream.rangeClosed(1, 27).forEach(index -> world.join("c" + index, null));
         var initial = world.tick(System.currentTimeMillis());
         var visitor = joined(initial, "c27");
@@ -50,8 +50,6 @@ class WorldRoomsTest {
         var returned = world.tick(System.currentTimeMillis());
         assertThat(joined(returned, "returning")).isEqualTo(visitor);
         assertThat(world.roomFor(visitor.token())).isEqualTo(2);
-        assertThat(world.peers(visitor.token())).isEmpty();
-        assertThat(world.peers(joined(initial, "c1").token())).contains("c2").doesNotContain("returning", "c1");
     }
 
     @Test

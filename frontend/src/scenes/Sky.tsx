@@ -60,7 +60,6 @@ void main() {
   #include <colorspace_fragment>
 }`
 
-// 따뜻한 주황빛 풍등과 구분되도록 별은 차가운 흰색·푸른색만 쓴다.
 const STAR_TINTS = [
   [0.82, 0.9, 1.0],
   [0.72, 0.82, 1.0],

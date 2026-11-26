@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { BellPanel } from '../features/BellPanel'
 import { FortunePanel } from '../features/FortunePanel'
 import { useWorld } from '../services/world'
 import { DonationDialog } from '../features/DonationDialog'
@@ -6,7 +7,8 @@ import { WishPanel } from '../features/WishPanel'
 import { PlazaMovement } from '../scenes/PlazaMovement'
 import type { PlazaDirection } from '../scenes/PlazaMovement'
 import { PlazaScene } from '../scenes/PlazaScene'
-import { WORLD_BOUNDS } from '../scenes/terrain'
+import { WORLD_BOUNDS, ZONES } from '../scenes/terrain'
+import { ZONE_LABELS } from '../scenes/Zones'
 import type { ZoneId } from '../scenes/Zones'
 import './app.css'
 
@@ -15,9 +17,8 @@ export function App() {
   const [closingFortune, setClosingFortune] = useState(false)
   const closeTimer = useRef<number | undefined>(undefined)
   const world = useWorld()
-  const [launchId, setLaunchId] = useState<number | null>(null)
+  const [wishNotice, setWishNotice] = useState(0)
   const dialog = useRef<HTMLDialogElement>(null)
-  const launchCount = useRef(0)
   const cameraBearing = useRef(0)
   const ownPlayer = world.players.find((player) => player.id === world.id)
 
@@ -27,10 +28,10 @@ export function App() {
   }, [panel])
 
   useEffect(() => {
-    if (launchId === null) return
-    const timer = window.setTimeout(() => setLaunchId(null), 2_200)
+    if (!wishNotice) return
+    const timer = window.setTimeout(() => setWishNotice(0), 2_700)
     return () => window.clearTimeout(timer)
-  }, [launchId])
+  }, [wishNotice])
 
   useEffect(() => () => window.clearTimeout(closeTimer.current), [])
 
@@ -51,10 +52,14 @@ export function App() {
     }, 200)
   }
 
-  function launch() {
-    launchCount.current += 1
-    setLaunchId(launchCount.current)
+  function hangWish() {
+    setWishNotice((count) => count + 1)
     setPanel((current) => (current === 'wish' ? null : current))
+  }
+
+  function visitRestArea() {
+    world.move(ZONES.rest[0], ZONES.rest[1] + 2.5)
+    setPanel(null)
   }
 
   function moveInDirection(direction: PlazaDirection) {
@@ -78,13 +83,8 @@ export function App() {
   return (
     <main className="plaza">
       <PlazaScene
-        launchId={launchId}
-        onComplete={() => setLaunchId(null)}
         world={world}
-        onOpenZone={(zone) => {
-          if (zone === 'wish' && launchId !== null) return
-          setPanel(zone)
-        }}
+        onOpenZone={setPanel}
         onCameraBearing={(bearing) => {
           cameraBearing.current = bearing
         }}
@@ -92,27 +92,19 @@ export function App() {
       <header className="plaza-header">
         <h1>나루</h1>
         <nav aria-label="나루 체험">
-          <button
-            className="plaza-button plaza-button--menu"
-            onClick={() => setPanel('fortune')}
-          >
-            <span aria-hidden="true">☾</span> 운세보기
-            <span aria-hidden="true" className="plaza-chevron">
-              ›
-            </span>
-          </button>
-          <button
-            className="plaza-button plaza-button--menu"
-            disabled={launchId !== null}
-            onClick={() => {
-              setPanel('wish')
-            }}
-          >
-            <span aria-hidden="true">◇</span> 풍등날리기
-            <span aria-hidden="true" className="plaza-chevron">
-              ›
-            </span>
-          </button>
+          {Object.entries(ZONE_LABELS).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className="plaza-button plaza-button--menu"
+              onClick={() => setPanel(id as ZoneId)}
+            >
+              {label}
+              <span aria-hidden="true" className="plaza-chevron">
+                ›
+              </span>
+            </button>
+          ))}
         </nav>
         <DonationDialog />
       </header>
@@ -133,7 +125,7 @@ export function App() {
         드래그로 시점 이동 · 휠 또는 두 손가락으로 확대·축소
       </p>
       <p className="world-status" role="status">
-        {launchId === null ? '' : '소원을 담은 풍등을 보냈습니다.'}
+        {wishNotice > 0 ? '소원패를 걸었어요.' : ''}
       </p>
       <dialog
         ref={dialog}
@@ -148,18 +140,29 @@ export function App() {
         }}
       >
         <div className="panel-heading">
-          <h2 id="panel-title">
-            {panel === 'fortune' ? '오늘의 운세' : '풍등날리기'}
-          </h2>
+          <h2 id="panel-title">{panel ? ZONE_LABELS[panel] : ''}</h2>
           <button className="plaza-button" onClick={closePanel}>
             닫기
           </button>
         </div>
         {panel === 'fortune' && <FortunePanel />}
+        {panel === 'bell' && <BellPanel />}
+        {panel === 'rest' && (
+          <div className="zone-panel">
+            <button
+              type="button"
+              className="plaza-button"
+              onClick={visitRestArea}
+              disabled={world.status !== 'joined'}
+            >
+              휴식공간으로 이동
+            </button>
+          </div>
+        )}
         <div hidden={panel !== 'wish'}>
           <WishPanel
             open={panel === 'wish'}
-            onLaunch={launch}
+            onHang={hangWish}
             roomToken={world.roomToken}
           />
         </div>

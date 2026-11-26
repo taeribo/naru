@@ -108,7 +108,7 @@ public class WishController {
 
         Integer room = rooms.roomFor(request.roomToken());
         Wish wish = store.create(request.author(), message, room);
-        events.publishEvent(new WishCreated(wish.id(), room == null ? null : request.roomToken()));
+        events.publishEvent(new WishCreated());
         return wish;
     }
 

@@ -1,11 +1,8 @@
-// 맵 배치(위에서 본 구상도): 맨 위 풍등 연못 → 가운데 벚꽃나무 → 건물 4채 → 아래 입장 계단과 붉은 도리이.
+// 중앙 벚꽃나무와 네 체험 구역, 남쪽의 입장 계단과 도리이.
 // 입장 계단·스폰 값은 서버(WorldRooms.java)의 스폰·이동 제한과 같아야 한다.
 
 /** 방문객이 움직일 수 있는 범위. 서버(WorldRooms.java)의 move 검사와 같아야 한다. */
 export const WORLD_BOUNDS = { minX: -27, maxX: 27, minZ: -19, maxZ: 36 }
-
-/** 풍등을 띄우는 큰 연못(맨 위). */
-export const POND = { cx: 0, cz: -26.5, width: 54, depth: 14, radius: 4 }
 
 /**
  * 입장 계단: 남쪽(z 큼)에서 북쪽으로 오르고, 위 단(착지대)에 붉은 도리이가 서며,
@@ -33,9 +30,6 @@ export const ZONES = {
   bell: [-16, 8],
   rest: [16, 8],
 } as const
-
-/** 소원 풍등이 떠오르기 시작하는 곳(연못 한가운데). */
-export const LAUNCH_ORIGIN: [number, number, number] = [0, 0.5, POND.cz]
 
 /** (x, z) 지점에서 걷는 사람 발밑의 높이: 계단 위면 계단 높이, 아니면 바닥. */
 export function groundHeight(x: number, z: number) {
