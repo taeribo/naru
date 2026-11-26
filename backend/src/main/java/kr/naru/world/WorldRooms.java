@@ -30,6 +30,10 @@ public class WorldRooms {
     }
 
     public synchronized String join(String connection, String token) {
+        return join(connection, token, false);
+    }
+
+    public synchronized String join(String connection, String token, boolean startAtEntrance) {
         if (connections.containsKey(connection)) return null;
         expire(System.currentTimeMillis());
         Member member = token == null ? null : members.get(token);
@@ -41,7 +45,10 @@ public class WorldRooms {
         } else {
             replaced = member.connection;
             if (replaced != null) connections.remove(replaced);
-            if (member.room != null) member.room.dirty = true;
+            if (member.room != null) {
+                if (startAtEntrance) placeAtEntrance(member, member.room.members.indexOf(member));
+                member.room.dirty = true;
+            }
         }
         member.connection = connection;
         member.needsWelcome = true;
@@ -66,7 +73,7 @@ public class WorldRooms {
     public synchronized void move(String connection, double x, double z) {
         Member member = connections.get(connection);
         if (member == null || member.room == null || !Double.isFinite(x) || !Double.isFinite(z)) return;
-        if (x < -27 || x > 27 || z < -19 || z > 36 || Math.hypot(x, z) < 2.7) return;
+        if (x < -54 || x > 54 || z < -38 || z > 72 || Math.hypot(x, z) < 2.7 || insidePond(x, z)) return;
         member.targetX = x;
         member.targetZ = z;
     }
@@ -129,6 +136,12 @@ public class WorldRooms {
         }
     }
 
+    private static void placeAtEntrance(Member member, int slot) {
+        // 계단과 좌우 건물 앞의 중앙 진입로에 배치한다.
+        member.x = member.targetX = (slot % 8 - 3.5) * 0.64;
+        member.z = member.targetZ = 34.5 + slot / 8 * 0.75;
+    }
+
     private void fillQueue() {
         var waiting = queue.iterator();
         while (waiting.hasNext()) {
@@ -139,10 +152,7 @@ public class WorldRooms {
             waiting.remove();
             member.room = room;
             member.needsWelcome = true;
-            int spawn = room.members.size();
-            // 입장 계단 남쪽 아래: 가로 10명씩 줄을 지어 시작한다.
-            member.x = member.targetX = (spawn % 10 - 4.5) * 0.7;
-            member.z = member.targetZ = 30.6 + spawn / 10 * 0.8;
+            placeAtEntrance(member, room.members.size());
             room.members.add(member);
             room.dirty = true;
             if (room.members.size() == OPEN_THRESHOLD && rooms.size() < maxRooms
@@ -167,6 +177,13 @@ public class WorldRooms {
         return room;
     }
 
+    // Rounded rectangle in terrain.ts POND, including the stone bank.
+    private static boolean insidePond(double x, double z) {
+        double dx = Math.max(0, Math.abs(x) - 15.8);
+        double dz = Math.max(0, Math.abs(z + 13) - 2.8);
+        return Math.hypot(dx, dz) < 3.85;
+    }
+
     private static boolean advance(Member member) {
         double dx = member.targetX - member.x;
         double dz = member.targetZ - member.z;
@@ -175,7 +192,7 @@ public class WorldRooms {
         double step = Math.min(1, 0.45 / distance);
         double x = member.x + dx * step;
         double z = member.z + dz * step;
-        if (Math.hypot(x, z) < 2.65) {
+        if (Math.hypot(x, z) < 2.65 || insidePond(x, z)) {
             member.targetX = member.x;
             member.targetZ = member.z;
             return false;

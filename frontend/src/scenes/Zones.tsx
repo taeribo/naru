@@ -1,15 +1,16 @@
+import { roofSnow, snowProgramKey } from './snow'
+import { ContactShade } from './ContactShade'
+import { useSurface } from './surfaces'
 import { Html } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { DoubleSide } from 'three'
+import { roofGeometry } from './shapes'
+import type { WorldPlayer } from '../services/world'
 import type { ReactNode } from 'react'
 import { BellHall, EmaRack, OmikujiBox, OmikujiRack, RestHall } from './Halls'
 import { ZONES } from './terrain'
-import {
-  getDoorTextures,
-  getDoorTexturesAlt,
-  getSignTexture,
-  getWoodTexture,
-} from './textures'
+import { getDoorTextures, getDoorTexturesAlt, getSignTexture } from './textures'
 
 export const ZONE_LABELS = {
   bell: '종울리기',
@@ -24,8 +25,9 @@ function Zone({
   position,
   yaw = 0,
   label,
-  hint,
-  ringColor,
+  nearby,
+  scale = 1,
+  accent,
   padColor,
   onSelect,
   children,
@@ -33,12 +35,15 @@ function Zone({
   position: [number, number, number]
   yaw?: number
   label: string
-  hint: string
-  ringColor: string
+  nearby: boolean
+  scale?: number
+  accent: string
   padColor: string
   onSelect: () => void
   children: ReactNode
 }) {
+  const [hovered, setHovered] = useState(false)
+
   function select(event: ThreeEvent<MouseEvent>) {
     if (event.delta > 5) return
     event.stopPropagation()
@@ -50,45 +55,40 @@ function Zone({
       position={position}
       rotation-y={yaw}
       onClick={select}
-      onPointerOver={() => (document.body.style.cursor = 'pointer')}
-      onPointerOut={() => (document.body.style.cursor = '')}
+      onPointerOver={(event) => {
+        if (event.pointerType === 'mouse') setHovered(true)
+      }}
+      onPointerOut={() => setHovered(false)}
     >
-      <mesh position-y={0.04}>
-        <cylinderGeometry args={[2.5, 2.6, 0.16, 40]} />
-        <meshStandardMaterial color={padColor} roughness={0.9} />
+      <ContactShade width={13.2} depth={11.6} height={0.054} />
+      <mesh position-y={0.095}>
+        <cylinderGeometry args={[4.18, 4.36, 0.22, 12]} />
+        <meshStandardMaterial color={padColor} roughness={1} />
       </mesh>
-      <mesh position-y={0.13} rotation-x={-Math.PI / 2}>
-        <ringGeometry args={[2.1, 2.3, 48]} />
-        <meshStandardMaterial
-          color={ringColor}
-          emissive={ringColor}
-          emissiveIntensity={1.6}
-          toneMapped={false}
-        />
+      <group scale={scale} position-y={0.1}>
+        {children}
+      </group>
+      <mesh position={[0, 0.22, 4.25]}>
+        <boxGeometry args={[1.9, 0.2, 0.37]} />
+        <meshStandardMaterial color={accent} roughness={1} />
       </mesh>
-      <mesh position-y={0.13} rotation-x={-Math.PI / 2}>
-        <ringGeometry args={[1.85, 1.9, 48]} />
-        <meshBasicMaterial color={ringColor} transparent opacity={0.55} />
-      </mesh>
-      {children}
-      <pointLight
-        position={[0, 2.4, 0.6]}
-        color={ringColor}
-        intensity={22}
-        distance={9}
-      />
-      <Html position={[0, 5.0, 0]} center zIndexRange={[5, 0]}>
-        <button type="button" className="zone-label" onClick={onSelect}>
-          <strong>{label}</strong>
-          <span>{hint}</span>
-        </button>
-      </Html>
+      {(nearby || hovered) && (
+        <Html position={[0, 1.1, 4.35]} center zIndexRange={[2, 0]}>
+          <button
+            type="button"
+            className="zone-label zone-label--nearby"
+            onClick={onSelect}
+          >
+            {label}
+          </button>
+        </Html>
+      )}
     </group>
   )
 }
 
 function FortuneStall() {
-  const wood = useMemo(getWoodTexture, [])
+  const wood = useSurface('wood')
   const doorsRed = useMemo(getDoorTextures, [])
   const doorsPink = useMemo(getDoorTexturesAlt, [])
   const sign = useMemo(getSignTexture, [])
@@ -104,7 +104,7 @@ function FortuneStall() {
       {/* 나무 판벽 */}
       <mesh position={[0, 1.8, -0.05]}>
         <boxGeometry args={[4.1, 1.8, 0.4]} />
-        <meshStandardMaterial map={wood} roughness={0.85} />
+        <meshStandardMaterial {...wood} color="#997154" roughness={1} />
       </mesh>
       {/* 운세 칸: 종이 쪽지 + 검은 판 위의 꽃 */}
       {[0, 1].flatMap((row) =>
@@ -173,18 +173,67 @@ function FortuneStall() {
   )
 }
 
-export function Zones({ onSelect }: { onSelect: (zone: ZoneId) => void }) {
+function TimberShelter({ open = false }: { open?: boolean }) {
+  const timber = useSurface('wood')
+  const tiles = useSurface('roof')
+  const roof = useMemo(() => roofGeometry(3.12, 2.3, 1.25, 0.45), [])
+  return (
+    <group position-z={-1.15}>
+      {[-2.52, 2.52].flatMap((x) =>
+        [-1.65, 1.65].map((z) => (
+          <mesh key={`${x}:${z}`} position={[x, 1.62, z]}>
+            <boxGeometry args={[0.23, 3.24, 0.23]} />
+            <meshStandardMaterial
+              normalMap={timber.normalMap}
+              roughnessMap={timber.roughnessMap}
+              color={open ? '#85654e' : '#864434'}
+              roughness={1}
+            />
+          </mesh>
+        )),
+      )}
+      <mesh position-y={3.19}>
+        <boxGeometry args={[5.45, 0.23, 3.8]} />
+        <meshStandardMaterial {...timber} color="#a58065" roughness={1} />
+      </mesh>
+      <mesh geometry={roof} position-y={3.38}>
+        <meshStandardMaterial
+          onBeforeCompile={roofSnow}
+          customProgramCacheKey={snowProgramKey}
+          {...tiles}
+          color="#858b96"
+          roughness={1}
+          side={DoubleSide}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+export function Zones({
+  onSelect,
+  visitor,
+}: {
+  onSelect: (zone: ZoneId) => void
+  visitor: WorldPlayer | undefined
+}) {
+  function closeTo(zone: ZoneId) {
+    const [x, z] = ZONES[zone]
+    return !!visitor && Math.hypot(visitor.x - x, visitor.z - z) < 8.5
+  }
   return (
     <>
       <Zone
         position={[ZONES.fortune[0], 0, ZONES.fortune[1]]}
         yaw={0.4}
         label={ZONE_LABELS.fortune}
-        hint="한지 운세"
-        ringColor="#9c93ff"
-        padColor="#2a2750"
+        nearby={closeTo('fortune')}
+        scale={1.25}
+        accent="#837d89"
+        padColor="#686477"
         onSelect={() => onSelect('fortune')}
       >
+        <TimberShelter />
         <FortuneStall />
         <group position={[0, 0, 1.5]}>
           <OmikujiBox />
@@ -197,9 +246,10 @@ export function Zones({ onSelect }: { onSelect: (zone: ZoneId) => void }) {
         position={[ZONES.wish[0], 0, ZONES.wish[1]]}
         yaw={-0.4}
         label={ZONE_LABELS.wish}
-        hint="소원 작성"
-        ringColor="#ffa24d"
-        padColor="#4a2a2c"
+        nearby={closeTo('wish')}
+        scale={1.35}
+        accent="#987d62"
+        padColor="#78665b"
         onSelect={() => onSelect('wish')}
       >
         <EmaRack />
@@ -208,9 +258,10 @@ export function Zones({ onSelect }: { onSelect: (zone: ZoneId) => void }) {
         position={[ZONES.bell[0], 0, ZONES.bell[1]]}
         yaw={0.4}
         label={ZONE_LABELS.bell}
-        hint="마음 정리"
-        ringColor="#d8b07a"
-        padColor="#3a2f2a"
+        nearby={closeTo('bell')}
+        scale={1.4}
+        accent="#a49171"
+        padColor="#77706c"
         onSelect={() => onSelect('bell')}
       >
         <BellHall />
@@ -219,11 +270,13 @@ export function Zones({ onSelect }: { onSelect: (zone: ZoneId) => void }) {
         position={[ZONES.rest[0], 0, ZONES.rest[1]]}
         yaw={-0.4}
         label={ZONE_LABELS.rest}
-        hint="고요한 쉼"
-        ringColor="#7fd6a0"
-        padColor="#22362e"
+        nearby={closeTo('rest')}
+        scale={1.26}
+        accent="#738879"
+        padColor="#6b756a"
         onSelect={() => onSelect('rest')}
       >
+        <TimberShelter open />
         <RestHall />
       </Zone>
     </>

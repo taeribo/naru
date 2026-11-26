@@ -40,7 +40,7 @@ public class WorldSocket extends TextWebSocketHandler {
         switch (input.path("type").asText()) {
             case "join" -> {
                 String token = input.path("token").asText(null);
-                String replaced = rooms.join(session.getId(), token);
+                String replaced = rooms.join(session.getId(), token, input.path("startAtEntrance").asBoolean(false));
                 if (replaced != null) disconnect(replaced, CloseStatus.POLICY_VIOLATION);
             }
             case "move" -> {

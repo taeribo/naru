@@ -2,7 +2,17 @@
 // 입장 계단·스폰 값은 서버(WorldRooms.java)의 스폰·이동 제한과 같아야 한다.
 
 /** 방문객이 움직일 수 있는 범위. 서버(WorldRooms.java)의 move 검사와 같아야 한다. */
-export const WORLD_BOUNDS = { minX: -27, maxX: 27, minZ: -19, maxZ: 36 }
+export const WORLD_BOUNDS = { minX: -54, maxX: 54, minZ: -38, maxZ: 72 }
+
+/** 물과 바위 테두리의 위치. 서버 이동 검사와 함께 관리한다. */
+export const POND = { x: 0, z: -13, width: 38, depth: 12, radius: 3.2 }
+
+export const COURTYARD = {
+  width: WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX,
+  depth: WORLD_BOUNDS.maxZ - WORLD_BOUNDS.minZ,
+  centerX: (WORLD_BOUNDS.minX + WORLD_BOUNDS.maxX) / 2,
+  centerZ: (WORLD_BOUNDS.minZ + WORLD_BOUNDS.maxZ) / 2,
+}
 
 /**
  * 입장 계단: 남쪽(z 큼)에서 북쪽으로 오르고, 위 단(착지대)에 붉은 도리이가 서며,
@@ -25,10 +35,10 @@ export const LANDING_HEIGHT = STAIRS.rise * STAIRS.upSteps // 1.2
 export const TORII_Z = (STAIRS_TOP_Z + LANDING_END_Z) / 2
 
 export const ZONES = {
-  fortune: [-16, -10],
-  wish: [16, -10],
-  bell: [-16, 8],
-  rest: [16, 8],
+  fortune: [-24, 5],
+  wish: [-31, -17],
+  bell: [24, 6],
+  rest: [35, -16],
 } as const
 
 /** (x, z) 지점에서 걷는 사람 발밑의 높이: 계단 위면 계단 높이, 아니면 바닥. */

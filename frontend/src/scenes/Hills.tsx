@@ -19,13 +19,15 @@ const FOREST = [
   '#1a3326',
   '#2b4a3a',
 ]
-const HAZE = new Color('#4a3a78')
+const HAZE = new Color('#676980')
 
 function ridge(x: number, seed: number) {
   return (
-    0.62 +
-    0.25 * Math.sin(x * 0.013 + seed) +
-    0.13 * Math.sin(x * 0.041 + seed * 2.3)
+    0.63 +
+    0.22 * Math.sin(x * 0.013 + seed) +
+    0.1 * Math.sin(x * 0.039 + seed * 2.3) +
+    0.045 * Math.sin(x * 0.099 + Math.sin(x * 0.021) + seed) +
+    0.024 * Math.cos(x * 0.21 + seed * 3.1)
   )
 }
 
@@ -47,7 +49,7 @@ function createLayerGeometry(layer: (typeof LAYERS)[number], index: number) {
     state = (state * 1664525 + 1013904223) % 4294967296
     return state / 4294967296
   }
-  const haze = 0.16 + index * 0.13
+  const haze = 0.19 + index * 0.12
   for (let vertex = 0; vertex < positions.count; vertex += 1) {
     const x = positions.getX(vertex)
     const local = positions.getZ(vertex)

@@ -378,3 +378,11 @@ textarea:focus-visible {
   min-height: 1.4em;
   margin: 0;
 }
+
+.zone-label--nearby {
+  min-height: 44px;
+  padding: 0.42rem 0.72rem;
+  background: #241e2adb;
+  border-color: #c9ac84b3;
+  font-size: 0.8rem;
+}
