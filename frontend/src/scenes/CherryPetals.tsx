@@ -1,47 +1,73 @@
 import { useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
-import type { BufferAttribute } from 'three'
+import { useMemo, useRef } from 'react'
+import { DoubleSide, Euler, Matrix4, Quaternion, Vector3 } from 'three'
+import type { InstancedMesh } from 'three'
+import { getPetalTexture } from './textures'
 
-const PETAL_COUNT = 64
+const PETAL_COUNT = 3000
+const FALL_HEIGHT = 16
 const PETALS = Array.from({ length: PETAL_COUNT }, (_, index) => {
   const angle = index * 2.39996
-  const radius = 2 + (index % 11) * 0.53
-  return [Math.cos(angle) * radius, Math.sin(angle) * radius, index * 0.329]
+  const radius = 1 + (index % 41) * 0.32
+  return {
+    x: Math.cos(angle) * radius,
+    z: Math.sin(angle) * radius,
+    phase: index * 0.329,
+    speed: 0.6 + (index % 7) * 0.1,
+    size: 0.05 + (index % 5) * 0.014,
+    spin: 1.2 + (index % 6) * 0.45,
+  }
 })
 
 export function CherryPetals() {
-  const positions = useRef(new Float32Array(PETAL_COUNT * 3))
-  const attribute = useRef<BufferAttribute>(null)
+  const mesh = useRef<InstancedMesh>(null)
+  const texture = useMemo(getPetalTexture, [])
+  const scratch = useMemo(
+    () => ({
+      matrix: new Matrix4(),
+      euler: new Euler(),
+      quaternion: new Quaternion(),
+      position: new Vector3(),
+      scale: new Vector3(),
+    }),
+    [],
+  )
 
   useFrame(({ clock }) => {
+    if (!mesh.current) return
     const time = clock.elapsedTime
-    PETALS.forEach(([x, z, phase], index) => {
-      positions.current[index * 3] = x + Math.sin(time * 0.7 + phase) * 0.85
-      positions.current[index * 3 + 1] =
-        0.25 +
-        ((((phase + 20_000 - time * (0.35 + (index % 5) * 0.05)) % 7.5) + 7.5) %
-          7.5)
-      positions.current[index * 3 + 2] = z + Math.cos(time * 0.4 + phase) * 0.65
+    const { matrix, euler, quaternion, position, scale } = scratch
+    PETALS.forEach(({ x, z, phase, speed, size, spin }, index) => {
+      const fall = (phase * 3 + time * speed) % FALL_HEIGHT
+      position.set(
+        x + Math.sin(time * 0.6 + phase) * 1.1 + fall * 0.22,
+        FALL_HEIGHT - fall,
+        z + Math.cos(time * 0.45 + phase) * 0.8,
+      )
+      euler.set(time * spin + phase, time * spin * 0.7, phase + time * 0.4)
+      quaternion.setFromEuler(euler)
+      scale.set(size, size, size)
+      mesh.current?.setMatrixAt(
+        index,
+        matrix.compose(position, quaternion, scale),
+      )
     })
-    if (attribute.current) attribute.current.needsUpdate = true
+    mesh.current.instanceMatrix.needsUpdate = true
   })
 
   return (
-    <points frustumCulled={false}>
-      <bufferGeometry>
-        <bufferAttribute
-          ref={attribute}
-          attach="attributes-position"
-          args={[positions.current, 3]}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        color="#ffaacb"
-        size={0.085}
-        transparent
-        opacity={0.82}
-        depthWrite={false}
+    <instancedMesh
+      ref={mesh}
+      args={[undefined, undefined, PETAL_COUNT]}
+      frustumCulled={false}
+    >
+      <planeGeometry args={[1, 1.4]} />
+      <meshBasicMaterial
+        map={texture}
+        alphaTest={0.35}
+        side={DoubleSide}
+        toneMapped={false}
       />
-    </points>
+    </instancedMesh>
   )
 }

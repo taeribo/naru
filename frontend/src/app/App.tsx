@@ -6,11 +6,12 @@ import { WishPanel } from '../features/WishPanel'
 import { PlazaMovement } from '../scenes/PlazaMovement'
 import type { PlazaDirection } from '../scenes/PlazaMovement'
 import { PlazaScene } from '../scenes/PlazaScene'
-import type { PlazaZone } from '../scenes/PlazaZones'
+import { WORLD_BOUNDS } from '../scenes/terrain'
+import type { ZoneId } from '../scenes/Zones'
 import './app.css'
 
 export function App() {
-  const [panel, setPanel] = useState<PlazaZone | null>(null)
+  const [panel, setPanel] = useState<ZoneId | null>(null)
   const [closingFortune, setClosingFortune] = useState(false)
   const closeTimer = useRef<number | undefined>(undefined)
   const world = useWorld()
@@ -63,8 +64,14 @@ export function App() {
       { up: Math.PI, left: -Math.PI / 2, down: 0, right: Math.PI / 2 }[
         direction
       ]
-    const x = Math.max(-16, Math.min(16, ownPlayer.x + Math.sin(angle) * 1.4))
-    const z = Math.max(-4, Math.min(11, ownPlayer.z + Math.cos(angle) * 1.4))
+    const x = Math.max(
+      WORLD_BOUNDS.minX,
+      Math.min(WORLD_BOUNDS.maxX, ownPlayer.x + Math.sin(angle) * 1.4),
+    )
+    const z = Math.max(
+      WORLD_BOUNDS.minZ,
+      Math.min(WORLD_BOUNDS.maxZ, ownPlayer.z + Math.cos(angle) * 1.4),
+    )
     world.move(x, z)
   }
 
@@ -74,7 +81,10 @@ export function App() {
         launchId={launchId}
         onComplete={() => setLaunchId(null)}
         world={world}
-        onOpenZone={setPanel}
+        onOpenZone={(zone) => {
+          if (zone === 'wish' && launchId !== null) return
+          setPanel(zone)
+        }}
         onCameraBearing={(bearing) => {
           cameraBearing.current = bearing
         }}
@@ -82,17 +92,26 @@ export function App() {
       <header className="plaza-header">
         <h1>나루</h1>
         <nav aria-label="나루 체험">
-          <button className="plaza-button" onClick={() => setPanel('fortune')}>
+          <button
+            className="plaza-button plaza-button--menu"
+            onClick={() => setPanel('fortune')}
+          >
             <span aria-hidden="true">☾</span> 운세보기
+            <span aria-hidden="true" className="plaza-chevron">
+              ›
+            </span>
           </button>
           <button
-            className="plaza-button"
+            className="plaza-button plaza-button--menu"
             disabled={launchId !== null}
             onClick={() => {
               setPanel('wish')
             }}
           >
             <span aria-hidden="true">◇</span> 풍등날리기
+            <span aria-hidden="true" className="plaza-chevron">
+              ›
+            </span>
           </button>
         </nav>
         <DonationDialog />

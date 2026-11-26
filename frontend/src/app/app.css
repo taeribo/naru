@@ -262,27 +262,55 @@ textarea:focus-visible {
   margin: 1rem auto 0;
 }
 
-.plaza-zone-button {
-  min-height: 44px;
-  padding: 0.35rem 0.7rem;
-  border: 1px solid #d6b582b3;
-  border-radius: 0.65rem;
-  background: #261b34eb;
-  color: #ffe2ad;
+.zone-label {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid #c99a6c;
+  border-radius: 999px;
+  background: #382345d9;
+  color: #ffe3b0;
   font: inherit;
-  font-size: 0.8125rem;
+  text-align: center;
   white-space: nowrap;
   cursor: pointer;
 }
 
-.plaza-zone-button[data-zone='fortune'] {
-  border-color: #bd9ada;
-  color: #f3d7ff;
+.zone-label strong {
+  font-size: 0.95rem;
 }
 
-.plaza-zone-button:focus-visible {
-  outline: 2px solid #fff3d6;
-  outline-offset: 3px;
+.zone-label span {
+  font-size: 0.72rem;
+  color: #f1d9bd;
+}
+
+.zone-label:hover {
+  background: #563653;
+}
+
+.plaza-button--menu {
+  justify-content: space-between;
+  min-width: 9.5rem;
+  background: #2a1646cc;
+  border-color: #d8b07a;
+  box-shadow:
+    inset 0 0 0 2px #d8b07a2b,
+    0 0 14px #b080ff44;
+}
+
+.plaza-chevron {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.plaza-header h1::after {
+  content: '';
+  display: block;
+  width: 7.5rem;
+  height: 2px;
+  margin: 0.15rem auto 0;
+  background: linear-gradient(90deg, transparent, #ffe2a2, transparent);
 }
 
 .plaza-movement {
@@ -326,8 +354,7 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-.plaza-direction:disabled,
-.plaza-zone-button:disabled {
+.plaza-direction:disabled {
   opacity: 0.48;
   cursor: default;
 }

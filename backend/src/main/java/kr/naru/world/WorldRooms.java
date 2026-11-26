@@ -66,7 +66,7 @@ public class WorldRooms {
     public synchronized void move(String connection, double x, double z) {
         Member member = connections.get(connection);
         if (member == null || member.room == null || !Double.isFinite(x) || !Double.isFinite(z)) return;
-        if (x < -16 || x > 16 || z < -4 || z > 11 || Math.hypot(x, z) < 2.7) return;
+        if (x < -27 || x > 27 || z < -19 || z > 36 || Math.hypot(x, z) < 2.7) return;
         member.targetX = x;
         member.targetZ = z;
     }
@@ -148,8 +148,9 @@ public class WorldRooms {
             member.room = room;
             member.needsWelcome = true;
             int spawn = room.members.size();
-            member.x = member.targetX = (spawn % 10 - 4.5) * 1.25;
-            member.z = member.targetZ = 5 + spawn / 10 * 1.7;
+            // 입장 계단 남쪽 아래: 가로 10명씩 줄을 지어 시작한다.
+            member.x = member.targetX = (spawn % 10 - 4.5) * 0.7;
+            member.z = member.targetZ = 30.6 + spawn / 10 * 0.8;
             room.members.add(member);
             room.dirty = true;
             if (room.members.size() == OPEN_THRESHOLD && rooms.size() < maxRooms
