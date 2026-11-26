@@ -1,3 +1,7 @@
+import { roofSnow, snowProgramKey } from './snow'
+import { GardenPines } from './GardenPines'
+import type { PinePlacement } from './GardenPines'
+import { useSurface } from './surfaces'
 import { useMemo } from 'react'
 import { DoubleSide } from 'three'
 import { roofGeometry } from './shapes'
@@ -5,13 +9,12 @@ import {
   getCastleGlowTexture,
   getCastleSignTexture,
   getCastleWallTexture,
-  getRoofTileTexture,
 } from './textures'
 
 export const CASTLE_POSITION: [number, number] = [-30, -56]
 
 const GOLD = '#e8b84a'
-const ROOF_TINT = '#6e7692'
+const ROOF_TINT = '#90949b'
 
 // 아래에서 위로 쌓이는 층: 벽 크기와 높이.
 const TIERS = [
@@ -22,44 +25,17 @@ const TIERS = [
 ]
 const STONE_BASE = 4
 
-function Pine({
-  position,
-  scale = 1,
-}: {
-  position: [number, number, number]
-  scale?: number
-}) {
-  return (
-    <group position={position} scale={scale}>
-      <mesh position-y={1.6} rotation-z={0.18}>
-        <cylinderGeometry args={[0.22, 0.38, 3.2, 7]} />
-        <meshStandardMaterial color="#4a2f2a" roughness={1} />
-      </mesh>
-      {(
-        [
-          [0.3, 3.3, 0, 2.6],
-          [-1.5, 2.4, 0.4, 1.9],
-          [1.9, 2.0, -0.3, 1.7],
-        ] as const
-      ).map(([x, y, z, size]) => (
-        <mesh
-          key={x}
-          position={[x, y, z]}
-          scale={[size, size * 0.42, size * 0.85]}
-        >
-          <sphereGeometry args={[1, 14, 10]} />
-          <meshStandardMaterial color="#2f7a5a" roughness={1} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
+const castlePines: PinePlacement[] = [
+  [[-15, 0, 9], 1.05],
+  [[16, 0, 8], 1.2],
+  [[-18, 0, -2], 0.88],
+]
 
 /** 흰 회반죽 벽, 검은 기와, 금 장식의 일본 성(천수각). */
 export function Castle() {
   const wall = useMemo(getCastleWallTexture, [])
   const glow = useMemo(getCastleGlowTexture, [])
-  const tiles = useMemo(getRoofTileTexture, [])
+  const roofSurface = useSurface('roof')
   const sign = useMemo(getCastleSignTexture, [])
 
   const layout = useMemo(() => {
@@ -107,7 +83,9 @@ export function Castle() {
           </mesh>
           <mesh geometry={roof} position-y={base + height - 0.1}>
             <meshStandardMaterial
-              map={tiles}
+              onBeforeCompile={roofSnow}
+              customProgramCacheKey={snowProgramKey}
+              {...roofSurface}
               color={ROOF_TINT}
               roughness={0.7}
               side={DoubleSide}
@@ -126,7 +104,9 @@ export function Castle() {
         scale={[0.4, 0.5, 0.28]}
       >
         <meshStandardMaterial
-          map={tiles}
+          onBeforeCompile={roofSnow}
+          customProgramCacheKey={snowProgramKey}
+          {...roofSurface}
           color={ROOF_TINT}
           roughness={0.7}
           side={DoubleSide}
@@ -192,9 +172,7 @@ export function Castle() {
           />
         </mesh>
       ))}
-      <Pine position={[-15, 0, 9]} scale={1.6} />
-      <Pine position={[16, 0, 8]} scale={1.9} />
-      <Pine position={[-18, 0, -2]} scale={1.3} />
+      <GardenPines placements={castlePines} />
     </group>
   )
 }

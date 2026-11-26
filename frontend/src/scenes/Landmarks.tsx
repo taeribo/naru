@@ -1,3 +1,6 @@
+import { roofSnow, snowProgramKey } from './snow'
+import { ContactShade } from './ContactShade'
+import { useSurface } from './surfaces'
 import { useMemo } from 'react'
 import {
   BoxGeometry,
@@ -11,6 +14,7 @@ import {
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { CASTLE_POSITION } from './Castle'
+import { WORLD_BOUNDS } from './terrain'
 import { Plaza } from './StoneCourtyard'
 import { Stairs } from './Stairs'
 import { roofGeometry } from './shapes'
@@ -18,9 +22,7 @@ import {
   getBlossomTexture,
   getFacadeGlowTexture,
   getFacadeTexture,
-  getGlowTexture,
   getPetalTexture,
-  getRoofTileTexture,
 } from './textures'
 
 function createRandom(seed: number) {
@@ -154,6 +156,7 @@ export function FlowerBed() {
   })
   return (
     <group>
+      <ContactShade width={15} depth={14} opacity={0.62} />
       <mesh position-y={0.22}>
         <cylinderGeometry args={[4.9, 5.0, 0.44, 48]} />
         <meshStandardMaterial color="#2c2340" roughness={1} />
@@ -212,7 +215,7 @@ function buildVillage() {
     if (Math.hypot(x - CASTLE_POSITION[0], z - CASTLE_POSITION[1]) < 24)
       continue
     // 광장 뒤쪽 멀리에 마을을 둔다.
-    if (Math.abs(x) < 30 || z > -40) continue
+    if (Math.abs(x) < 27 || z > WORLD_BOUNDS.minZ - 12) continue
     const building = new Matrix4().makeRotationY(yaw).setPosition(x, ground, z)
 
     place(
@@ -280,20 +283,16 @@ function buildVillage() {
   }
 }
 
-/** 뒤쪽 언덕 위 마을(불 켜진 창살 창), 먼 산, 보랏빛 구름. */
+/** 뒤쪽 언덕 위 마을과 불 켜진 창살 창. */
 export function Village() {
-  const halo = useMemo(getGlowTexture, [])
   const facade = useMemo(getFacadeTexture, [])
   const facadeGlow = useMemo(getFacadeGlowTexture, [])
-  const tiles = useMemo(getRoofTileTexture, [])
+  const roofSurface = useSurface('roof')
+  const timber = useSurface('wood')
   const village = useMemo(buildVillage, [])
 
   return (
     <group>
-      <mesh rotation-x={-Math.PI / 2} position={[0, -0.05, -300]}>
-        <planeGeometry args={[1600, 900]} />
-        <meshStandardMaterial color="#1b1636" roughness={1} />
-      </mesh>
       <mesh geometry={village.stone}>
         <meshStandardMaterial color="#6d6480" roughness={1} />
       </mesh>
@@ -302,40 +301,23 @@ export function Village() {
           map={facade}
           emissiveMap={facadeGlow}
           emissive="#ffffff"
-          emissiveIntensity={1.4}
+          emissiveIntensity={0.95}
           roughness={1}
         />
       </mesh>
       <mesh geometry={village.wood}>
-        <meshStandardMaterial color="#5a2f20" roughness={0.9} />
+        <meshStandardMaterial {...timber} color="#725242" roughness={1} />
       </mesh>
       <mesh geometry={village.roofs}>
         <meshStandardMaterial
-          map={tiles}
-          color="#7d86a6"
+          onBeforeCompile={roofSnow}
+          customProgramCacheKey={snowProgramKey}
+          {...roofSurface}
+          color="#9599a1"
           roughness={0.85}
           side={DoubleSide}
         />
       </mesh>
-      {(
-        [
-          [-40, 13, -75, 70, 18, '#8a5fe0', 0.32],
-          [30, 10, -80, 80, 20, '#a35fd8', 0.3],
-          [-10, 7, -90, 90, 16, '#6f4fd0', 0.28],
-          [60, 16, -85, 60, 16, '#8a5fe0', 0.26],
-        ] as const
-      ).map(([x, y, z, w, h, color, opacity]) => (
-        <sprite key={`${x}-${z}`} position={[x, y, z]} scale={[w, h, 1]}>
-          <spriteMaterial
-            map={halo}
-            color={color}
-            opacity={opacity}
-            transparent
-            depthWrite={false}
-            fog={false}
-          />
-        </sprite>
-      ))}
     </group>
   )
 }

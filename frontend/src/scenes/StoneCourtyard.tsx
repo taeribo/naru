@@ -1,64 +1,183 @@
+import { CircleGeometry, PlaneGeometry, Vector2 } from 'three'
+import type { MeshStandardMaterial } from 'three'
+import { useSurface } from './surfaces'
 import { useMemo } from 'react'
-import { ZONES } from './terrain'
-import { getGravelTexture, getSlabTexture } from './textures'
+import { COURTYARD, POND, STAIRS_END_Z, WORLD_BOUNDS, ZONES } from './terrain'
+
+const shadePaving: MeshStandardMaterial['onBeforeCompile'] = (shader) => {
+  shader.vertexShader = shader.vertexShader
+    .replace(
+      '#include <common>',
+      '#include <common>\nvarying vec2 vStonePosition;',
+    )
+    .replace(
+      '#include <begin_vertex>',
+      '#include <begin_vertex>\nvStonePosition = position.xy;',
+    )
+  shader.fragmentShader = shader.fragmentShader
+    .replace(
+      '#include <common>',
+      '#include <common>\nvarying vec2 vStonePosition;',
+    )
+    .replace(
+      '#include <map_fragment>',
+      `
+      #include <map_fragment>
+      vec2 stonePoint = vStonePosition;
+      float broad = sin(dot(stonePoint, vec2(0.37, 0.19)))
+        * sin(dot(stonePoint, vec2(0.15, -0.51)));
+      float detail = sin(dot(stonePoint, vec2(1.11, 0.43)))
+        * sin(dot(stonePoint, vec2(-0.56, 1.19)));
+      diffuseColor.rgb *= 1.0 + broad * 0.105 + detail * 0.038;
+      vec2 edge = vec2(${(width / 2).toFixed(2)}, ${(depth / 2).toFixed(2)}) - abs(stonePoint);
+      float fade = min(edge.x, edge.y) + broad * 1.5 + detail * 0.65;
+      diffuseColor.a *= smoothstep(0.0, 5.0, fade);
+    `,
+    )
+}
 
 // 건물 사이로 난 돌길(구상도의 회색 길). 중심 x, z와 가로·세로 길이.
+const SOUTH_PATH_START = 34.5
+const { minZ, maxZ } = WORLD_BOUNDS
+const { width, depth, centerX, centerZ } = COURTYARD
+const AXIS_WIDTH = 5.6
+const BRANCH_WIDTH = 3.25
+const POND_FRONT = POND.z + POND.depth / 2 + 1.9
+const POND_BACK = POND.z - POND.depth / 2 - 1.9
+const POND_BYPASS_X = POND.width / 2 + 2.75
 const PATHS: [number, number, number, number][] = [
-  [0, -1.25, 3, 36.5], // 북쪽 정원 ↔ 입장 계단 중앙길
-  [0, -10, 26, 3], // 윗줄 건물로 가는 길
-  [0, 8, 26, 3], // 아랫줄 건물로 가는 길
-  [0, 32, 14, 5], // 스폰 광장(계단 아래)
+  [0, (POND_FRONT + STAIRS_END_Z) / 2, AXIS_WIDTH, STAIRS_END_Z - POND_FRONT],
+  [0, (minZ + 1 + POND_BACK) / 2, AXIS_WIDTH, POND_BACK - minZ - 1],
+  [0, POND_FRONT, 2 * POND_BYPASS_X + BRANCH_WIDTH, BRANCH_WIDTH],
+  [0, POND_BACK, 2 * POND_BYPASS_X + BRANCH_WIDTH, BRANCH_WIDTH],
+  ...[-1, 1].map((side): [number, number, number, number] => [
+    POND_BYPASS_X * side,
+    POND.z,
+    BRANCH_WIDTH,
+    POND_FRONT - POND_BACK,
+  ]),
+  ...Object.values(ZONES).map(([x, z]): [number, number, number, number] => [
+    (x + (Math.sign(x) * AXIS_WIDTH) / 2) / 2,
+    z,
+    Math.abs(x) - AXIS_WIDTH / 2,
+    BRANCH_WIDTH,
+  ]),
+  [0, 32, 14, 5],
+  [
+    0,
+    (SOUTH_PATH_START + maxZ - 4) / 2,
+    AXIS_WIDTH,
+    maxZ - 4 - SOUTH_PATH_START,
+  ],
 ]
 
 /** 어두운 자갈 바닥 위에 돌길과 광장. */
 export function Plaza() {
-  const gravel = useMemo(() => {
-    const texture = getGravelTexture().clone()
-    texture.repeat.set(75, 60)
-    texture.needsUpdate = true
-    return texture
+  const stone = useSurface('stone')
+  const relief = useMemo(() => new Vector2(0.46, 0.46), [])
+  const fullPaving = useMemo(() => {
+    const surface = new PlaneGeometry(width, depth)
+    const uv = surface.attributes.uv
+    for (let index = 0; index < uv.count; index++) {
+      uv.setXY(
+        index,
+        (uv.getX(index) * width) / 3.4,
+        (uv.getY(index) * depth) / 3.4,
+      )
+    }
+    return surface
   }, [])
-  const slab = useMemo(getSlabTexture, [])
-  const pathTextures = useMemo(
+  const walks = useMemo(
     () =>
-      PATHS.map(([, , width, depth]) => {
-        const texture = slab.clone()
-        texture.repeat.set(width / 4, depth / 4)
-        texture.needsUpdate = true
-        return texture
+      PATHS.map(([x, z, pathWidth, pathDepth]) => {
+        const geometry = new PlaneGeometry(pathWidth, pathDepth)
+        const uv = geometry.attributes.uv
+        for (let index = 0; index < uv.count; index++) {
+          uv.setXY(
+            index,
+            (x + (uv.getX(index) - 0.5) * pathWidth) / 3.4,
+            (-z + (uv.getY(index) - 0.5) * pathDepth) / 3.4,
+          )
+        }
+        return geometry
       }),
-    [slab],
+    [],
   )
-  const discTexture = useMemo(() => {
-    const texture = slab.clone()
-    texture.repeat.set(3.3, 3.3)
-    texture.needsUpdate = true
-    return texture
-  }, [slab])
+  const courts = useMemo(
+    () =>
+      [8.3, 4.35].map((radius) => {
+        const geometry = new CircleGeometry(radius, 48)
+        const uv = geometry.attributes.uv
+        for (let index = 0; index < uv.count; index++) {
+          uv.setXY(
+            index,
+            (uv.getX(index) * radius) / 1.7,
+            (uv.getY(index) * radius) / 1.7,
+          )
+        }
+        return geometry
+      }),
+    [],
+  )
   return (
     <>
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0, -20]}>
-        <planeGeometry args={[300, 240]} />
-        <meshStandardMaterial map={gravel} roughness={1} color="#cfc4e0" />
+      <mesh
+        receiveShadow
+        geometry={fullPaving}
+        rotation-x={-Math.PI / 2}
+        position={[centerX, 0.028, centerZ]}
+      >
+        <meshStandardMaterial
+          {...stone}
+          normalScale={relief}
+          roughness={0.89}
+          color="#b6aea7"
+          onBeforeCompile={shadePaving}
+          transparent
+          alphaTest={0.06}
+        />
       </mesh>
-      {PATHS.map(([x, z, width, depth], index) => (
-        <mesh key={index} rotation-x={-Math.PI / 2} position={[x, 0.02, z]}>
-          <planeGeometry args={[width, depth]} />
-          <meshStandardMaterial map={pathTextures[index]} roughness={0.95} />
+      {PATHS.map(([x, z], index) => (
+        <mesh
+          key={index}
+          receiveShadow
+          geometry={walks[index]}
+          rotation-x={-Math.PI / 2}
+          position={[x, 0.047, z]}
+        >
+          <meshStandardMaterial
+            {...stone}
+            normalScale={relief}
+            roughness={0.89}
+            color="#e7d6bc"
+          />
         </mesh>
       ))}
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0.025, 0]}>
-        <circleGeometry args={[6.6, 48]} />
-        <meshStandardMaterial map={discTexture} roughness={0.95} />
+      <mesh
+        geometry={courts[0]}
+        rotation-x={-Math.PI / 2}
+        position={[0, 0.052, 0]}
+      >
+        <meshStandardMaterial
+          {...stone}
+          normalScale={relief}
+          roughness={0.89}
+          color="#d1cbd3"
+        />
       </mesh>
       {Object.values(ZONES).map(([x, z]) => (
         <mesh
-          key={`${x}${z}`}
+          key={`${x}:${z}`}
+          geometry={courts[1]}
           rotation-x={-Math.PI / 2}
-          position={[x, 0.022, z]}
+          position={[x, 0.05, z]}
         >
-          <circleGeometry args={[3.4, 40]} />
-          <meshStandardMaterial map={discTexture} roughness={0.95} />
+          <meshStandardMaterial
+            {...stone}
+            normalScale={relief}
+            roughness={0.89}
+            color="#cbcad2"
+          />
         </mesh>
       ))}
     </>

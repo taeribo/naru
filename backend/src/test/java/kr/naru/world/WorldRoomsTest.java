@@ -53,6 +53,31 @@ class WorldRoomsTest {
     }
 
     @Test
+    void freshPageStartsOutsideWhileNetworkReconnectKeepsPosition() {
+        long now = System.currentTimeMillis();
+        world.join("initial", null);
+        var initial = world.tick(now);
+        var visitor = joined(initial, "initial");
+        var spawn = player(initial, "initial", visitor.id());
+        assertThat(spawn.z()).isGreaterThan(33);
+        assertThat(Math.abs(spawn.x())).isLessThan(3);
+
+        world.move("initial", spawn.x(), 17);
+        var moved = player(world.tick(now + 100), "initial", visitor.id());
+        assertThat(moved.z()).isLessThan(spawn.z());
+
+        world.leave("initial");
+        world.join("retry", visitor.token(), false);
+        var reconnected = world.tick(now + 200);
+        assertThat(player(reconnected, "retry", visitor.id())).isEqualTo(moved);
+
+        world.join("reload", visitor.token(), true);
+        var refreshed = world.tick(now + 300);
+        assertThat(joined(refreshed, "reload")).isEqualTo(visitor);
+        assertThat(player(refreshed, "reload", visitor.id())).isEqualTo(spawn);
+    }
+
+    @Test
     void restoresQueuePositionAfterBriefDisconnect() {
         IntStream.rangeClosed(1, 62).forEach(index -> world.join("c" + index, null));
         var first = waiting(world.tick(System.currentTimeMillis()), "c61");
@@ -75,6 +100,47 @@ class WorldRoomsTest {
         world.leave("c61");
         var released = world.tick(System.currentTimeMillis() + 15_000);
         assertThat(joined(released, "c62").room()).isEqualTo(1);
+    }
+
+    @Test
+    void acceptsMovementInTheExpandedCourtyardButRejectsTargetsOutsideIt() {
+        world.join("visitor", null);
+        long now = System.currentTimeMillis();
+        var visitor = joined(world.tick(now), "visitor");
+
+        world.move("visitor", 54, 72);
+        List<WorldRooms.Delivery> movement = List.of();
+        for (int tick = 1; tick <= 240; tick++) {
+            var update = world.tick(now + tick * 100L);
+            if (!update.isEmpty()) movement = update;
+        }
+        var atCorner = player(movement, "visitor", visitor.id());
+        assertThat(atCorner.x()).isEqualTo(54);
+        assertThat(atCorner.z()).isEqualTo(72);
+
+        world.move("visitor", 54.1, 72);
+        assertThat(world.tick(now + 24_100)).isEmpty();
+        world.move("visitor", 54, 72.1);
+        assertThat(world.tick(now + 24_200)).isEmpty();
+    }
+
+    @Test
+    void rejectsThePondAndStopsMovementThatWouldCrossIt() {
+        world.join("visitor", null);
+        long now = System.currentTimeMillis();
+        var visitor = joined(world.tick(now), "visitor");
+
+        world.move("visitor", 8, -13);
+        assertThat(world.tick(now + 100)).isEmpty();
+
+        world.move("visitor", 12, -28);
+        WorldRooms.Player last = null;
+        for (int tick = 2; tick <= 180; tick++) {
+            var update = world.tick(now + tick * 100L);
+            if (!update.isEmpty()) last = player(update, "visitor", visitor.id());
+        }
+        assertThat(last).isNotNull();
+        assertThat(last.z()).isBetween(-6.35, -5.8);
     }
 
     private static WorldRooms.Joined joined(List<WorldRooms.Delivery> messages, String connection) {

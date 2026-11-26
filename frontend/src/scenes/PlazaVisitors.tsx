@@ -2,7 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import type { Group } from 'three'
 import type { WorldPlayer } from '../services/world'
-import { groundHeight } from './terrain'
+import { COURTYARD, groundHeight } from './terrain'
 
 function Visitor({ player, own }: { player: WorldPlayer; own: boolean }) {
   const group = useRef<Group>(null)
@@ -11,8 +11,15 @@ function Visitor({ player, own }: { player: WorldPlayer; own: boolean }) {
   useFrame((_state, delta) => {
     if (!group.current) return
     const blend = 1 - Math.exp(-12 * delta)
-    group.current.position.x += (player.x - group.current.position.x) * blend
-    group.current.position.z += (player.z - group.current.position.z) * blend
+    const dx = player.x - group.current.position.x
+    const dz = player.z - group.current.position.z
+    if (Math.hypot(dx, dz) > 0.025) {
+      const turn = Math.atan2(-dx, -dz) - group.current.rotation.y
+      group.current.rotation.y +=
+        Math.atan2(Math.sin(turn), Math.cos(turn)) * blend
+    }
+    group.current.position.x += dx * blend
+    group.current.position.z += dz * blend
     // 계단을 오르내릴 때 높이가 툭툭 튀지 않게 부드럽게 따라간다.
     group.current.position.y +=
       (groundHeight(group.current.position.x, group.current.position.z) -
@@ -66,13 +73,13 @@ export function PlazaVisitors({
       {ownId !== null && (
         <mesh
           rotation-x={-Math.PI / 2}
-          position={[0, 0.015, 4]}
+          position={[COURTYARD.centerX, 0.015, COURTYARD.centerZ]}
           onClick={(event) => {
             if (event.delta > 5) return
             onMove(event.point.x, event.point.z)
           }}
         >
-          <planeGeometry args={[56, 48]} />
+          <planeGeometry args={[COURTYARD.width, COURTYARD.depth]} />
           <meshBasicMaterial visible={false} />
         </mesh>
       )}

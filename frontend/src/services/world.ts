@@ -58,6 +58,7 @@ export function useWorld() {
     let reconnect: number | undefined
     let delay = RETRY_MIN
     let stopped = false
+    let startAtEntrance = true
     const url = new URL('/api/world/ws', window.location.href)
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
 
@@ -73,7 +74,10 @@ export function useWorld() {
         const socket = new WebSocket(url)
         socketRef.current = socket
         socket.addEventListener('open', () => {
-          if (!stopped) socket.send(JSON.stringify({ type: 'join', token }))
+          if (!stopped)
+            socket.send(
+              JSON.stringify({ type: 'join', token, startAtEntrance }),
+            )
         })
         socket.addEventListener('message', ({ data }) => {
           if (stopped || typeof data !== 'string') return
@@ -96,6 +100,7 @@ export function useWorld() {
               })
               break
             case 'joined':
+              startAtEntrance = false
               token = event.token
               saveSession(event.token)
               delay = RETRY_MIN

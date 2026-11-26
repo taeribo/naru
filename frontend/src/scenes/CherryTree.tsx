@@ -1,6 +1,6 @@
+import { barkSnow, blossomSnow, snowProgramKey } from './snow'
 import { useMemo } from 'react'
 import {
-  AdditiveBlending,
   BufferGeometry,
   CatmullRomCurve3,
   Color,
@@ -12,21 +12,13 @@ import {
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { taperedTube } from './shapes'
-import { getBarkTexture, getBlossomTexture, getGlowTexture } from './textures'
+import { getBarkTexture, getBlossomTexture } from './textures'
 
 const GOLDEN_ANGLE = 2.39996
 const MAX_DEPTH = 3
 const TREE_SCALE = 1.6
 const FLOWER_COUNT = 16000
 const FLOWER_SIZE = 1.9
-const GLOW_SPOTS: [number, number, number, number][] = [
-  [0, 8, 0, 18],
-  [-6, 6.5, 1, 12],
-  [6, 6.5, 1, 12],
-  [-3, 8, 3, 10],
-  [3, 8, 3, 10],
-]
-
 type Anchor = { point: Vector3; spread: number }
 
 function createRandom(seed: number) {
@@ -48,7 +40,7 @@ function buildTree() {
     new Vector3(0.12, 1.4, 0.06),
     new Vector3(-0.12, 2.8, -0.04),
     new Vector3(0.06, 4.2, 0.05),
-    new Vector3(0, 4.95, 0),
+    new Vector3(0, 4.65, 0),
   ])
   limbs.push(taperedTube(trunk, 0.85, 0.3, 12, 1.1))
 
@@ -119,22 +111,55 @@ function buildTree() {
     const angle = index * GOLDEN_ANGLE + random() * 0.4
     grow(
       trunk.getPointAt(0.3 + (index / 8) * 0.42),
-      new Vector3(Math.cos(angle), 0.45 + random() * 0.45, Math.sin(angle)),
-      2.6 + random() * 0.9,
+      new Vector3(Math.cos(angle), 0.24 + random() * 0.28, Math.sin(angle)),
+      3.0 + random() * 0.85,
       0.21,
       0,
     )
   }
-  grow(trunk.getPointAt(1), new Vector3(0.05, 1, 0.02), 1.3, 0.17, 0)
+  for (const angle of [0.2, 2.2, 4.75]) {
+    grow(
+      trunk.getPointAt(0.77),
+      new Vector3(Math.cos(angle), 0.43, Math.sin(angle)),
+      2.35,
+      0.14,
+      0,
+    )
+  }
 
-  return { bark: mergeGeometries(limbs), anchors }
+  // Offset adjoining lobes so the crown reads as a broad, irregular cloud.
+  const lobes = [
+    [-3.0, 4.8, 0.4, 1.85, 1.22],
+    [-1.65, 5.65, -0.8, 1.95, 1.28],
+    [0.25, 5.82, 0.3, 2.2, 1.34],
+    [2.1, 5.55, -0.95, 1.9, 1.15],
+    [3.5, 4.72, 0.05, 1.65, 1.15],
+    [0.8, 4.85, 2.05, 2.15, 1.1],
+    [-1.55, 4.82, -2.2, 1.9, 1.18],
+  ]
+  const crown = lobes.flatMap(([x, y, z, width, height]) =>
+    Array.from({ length: 42 }, (_, index): Anchor => {
+      const vertical = (2 * (index + 0.5)) / 42 - 1
+      const circle = Math.sqrt(1 - vertical * vertical)
+      const angle = index * GOLDEN_ANGLE + random() * 0.25
+      const radius = 0.63 + random() * 0.37
+      return {
+        point: new Vector3(
+          x + Math.cos(angle) * circle * width * radius,
+          y + vertical * height * radius,
+          z + Math.sin(angle) * circle * width * 0.86 * radius,
+        ),
+        spread: 0.58,
+      }
+    }),
+  )
+  return { bark: mergeGeometries(limbs), anchors, crown }
 }
 
 export function CherryTree() {
   const tree = useMemo(buildTree, [])
   const barkTexture = useMemo(getBarkTexture, [])
   const blossom = useMemo(getBlossomTexture, [])
-  const halo = useMemo(getGlowTexture, [])
 
   return (
     <group>
@@ -142,11 +167,13 @@ export function CherryTree() {
         <mesh geometry={tree.bark}>
           <meshStandardMaterial
             map={barkTexture}
+            onBeforeCompile={barkSnow}
+            customProgramCacheKey={snowProgramKey}
             roughness={1}
             color="#c49a84"
           />
         </mesh>
-        <Flowers anchors={tree.anchors} texture={blossom} />
+        <Flowers anchors={tree.anchors} crown={tree.crown} texture={blossom} />
       </group>
       {/* 신목(神木)의 금줄과 종이 장식 */}
       <group position={[0, 2.5, 0]}>
@@ -172,49 +199,23 @@ export function CherryTree() {
           )
         })}
       </group>
-      {GLOW_SPOTS.map(([x, y, z, size]) => (
-        <sprite
-          key={`${x}-${y}-${z}`}
-          position={[x, y, z]}
-          scale={[size, size, 1]}
-        >
-          <spriteMaterial
-            map={halo}
-            color="#ff9ccc"
-            opacity={0.2}
-            blending={AdditiveBlending}
-            transparent
-            depthWrite={false}
-            fog={false}
-          />
-        </sprite>
-      ))}
-      {/* 꽃잎이 광원: 바닥과 주변에 분홍빛이 번지도록 수관 아래에 조명을 둔다. */}
-      {(
-        [
-          [0, 5, 3],
-          [-5, 6, 0],
-          [5, 6, 0],
-          [0, 11, -1],
-        ] as const
-      ).map(([x, y, z]) => (
-        <pointLight
-          key={`${x}-${z}`}
-          position={[x, y, z]}
-          color="#ff9fd0"
-          intensity={300}
-          distance={26}
-        />
-      ))}
+      <pointLight
+        position={[0, 4, 2]}
+        color="#ffd5ab"
+        intensity={64}
+        distance={24}
+      />
     </group>
   )
 }
 
 function Flowers({
   anchors,
+  crown,
   texture,
 }: {
   anchors: Anchor[]
+  crown: Anchor[]
   texture: ReturnType<typeof getBlossomTexture>
 }) {
   return (
@@ -230,10 +231,11 @@ function Flowers({
         const position = new Vector3()
         const scale = new Vector3()
         const color = new Color()
-        const deep = new Color('#f08ab8')
-        const bright = new Color('#ffffff')
+        const deep = new Color('#d78da6')
+        const bright = new Color('#fff1dd')
         for (let index = 0; index < FLOWER_COUNT; index += 1) {
-          const { point, spread } = anchors[index % anchors.length]
+          const locations = index % 5 === 0 ? anchors : crown
+          const { point, spread } = locations[index % locations.length]
           position.set(
             point.x + (random() + random() - 1) * spread * 1.5,
             point.y + (random() + random() - 1) * spread,
@@ -260,11 +262,15 @@ function Flowers({
       }}
     >
       <planeGeometry args={[1, 1]} />
-      <meshBasicMaterial
+      <meshStandardMaterial
         map={texture}
+        onBeforeCompile={blossomSnow}
+        customProgramCacheKey={snowProgramKey}
+        roughness={0.94}
+        emissive="#e1a6af"
+        emissiveIntensity={0.16}
         alphaTest={0.45}
         side={DoubleSide}
-        toneMapped={false}
       />
     </instancedMesh>
   )

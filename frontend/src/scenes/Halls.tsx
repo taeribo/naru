@@ -1,3 +1,5 @@
+import { propSnow, roofSnow, snowProgramKey } from './snow'
+import { useSurface } from './surfaces'
 import { useMemo } from 'react'
 import {
   DoubleSide,
@@ -9,7 +11,7 @@ import {
   Vector3,
 } from 'three'
 import { roofGeometry } from './shapes'
-import { getEmaTexture, getRoofTileTexture, getSignTexture } from './textures'
+import { getEmaTexture, getSignTexture } from './textures'
 
 const WOOD = '#6b3d1c'
 const RED = '#c2382a'
@@ -93,7 +95,11 @@ export function OmikujiRack() {
       ))}
       <mesh position-y={2.2}>
         <boxGeometry args={[2.9, 0.12, 0.2]} />
-        <meshStandardMaterial color={WOOD} />
+        <meshStandardMaterial
+          color={WOOD}
+          onBeforeCompile={propSnow}
+          customProgramCacheKey={snowProgramKey}
+        />
       </mesh>
       {[1.8, 1.45, 1.1].map((y) => (
         <mesh key={y} position-y={y} rotation-z={Math.PI / 2}>
@@ -139,21 +145,24 @@ export function OmikujiRack() {
 
 /** 소원패(에마): 나무 걸이에 소원을 적은 나무패가 줄줄이 걸려 있다. */
 export function EmaRack() {
+  const timber = useSurface('wood')
   const ema = useMemo(getEmaTexture, [])
-  const tiles = useMemo(getRoofTileTexture, [])
+  const roofSurface = useSurface('roof')
   const roof = useMemo(() => roofGeometry(2.7, 1.1, 0.7, 0.3), [])
   return (
     <group position-z={-0.6}>
       {[-2.1, 2.1].map((x) => (
         <mesh key={x} position={[x, 1.25, 0]}>
           <boxGeometry args={[0.16, 2.5, 0.16]} />
-          <meshStandardMaterial color={RED} />
+          <meshStandardMaterial {...timber} color={RED} />
         </mesh>
       ))}
       <mesh geometry={roof} position-y={2.45}>
         <meshStandardMaterial
-          map={tiles}
-          color="#7d86a6"
+          onBeforeCompile={roofSnow}
+          customProgramCacheKey={snowProgramKey}
+          {...roofSurface}
+          color="#9599a1"
           roughness={0.8}
           side={DoubleSide}
         />
@@ -161,7 +170,7 @@ export function EmaRack() {
       {[2.05, 1.6, 1.15].map((y) => (
         <mesh key={y} position-y={y}>
           <boxGeometry args={[4.3, 0.07, 0.07]} />
-          <meshStandardMaterial color={WOOD} />
+          <meshStandardMaterial {...timber} color={WOOD} />
         </mesh>
       ))}
       <instancedMesh
@@ -198,7 +207,8 @@ export function EmaRack() {
 
 /** 종 울리기: 지붕 아래 매달린 범종과 당목(치는 통나무). */
 export function BellHall() {
-  const tiles = useMemo(getRoofTileTexture, [])
+  const timber = useSurface('wood')
+  const roofSurface = useSurface('roof')
   const roof = useMemo(() => roofGeometry(3.1, 3.1, 1.3, 0.6), [])
   const bell = useMemo(
     () =>
@@ -225,7 +235,7 @@ export function BellHall() {
         [-1.9, 1.9].map((z) => (
           <mesh key={`${x}${z}`} position={[x, 1.8, z]}>
             <boxGeometry args={[0.22, 3, 0.22]} />
-            <meshStandardMaterial color={RED} />
+            <meshStandardMaterial {...timber} color={RED} />
           </mesh>
         )),
       )}
@@ -235,8 +245,10 @@ export function BellHall() {
       </mesh>
       <mesh geometry={roof} position-y={3.25}>
         <meshStandardMaterial
-          map={tiles}
-          color="#7d86a6"
+          onBeforeCompile={roofSnow}
+          customProgramCacheKey={snowProgramKey}
+          {...roofSurface}
+          color="#9599a1"
           roughness={0.8}
           side={DoubleSide}
         />
@@ -261,7 +273,7 @@ export function BellHall() {
       ))}
       <mesh position={[0, 1.55, 1.05]} rotation-x={Math.PI / 2}>
         <cylinderGeometry args={[0.13, 0.13, 1.7, 10]} />
-        <meshStandardMaterial color="#8a5a2a" roughness={0.8} />
+        <meshStandardMaterial {...timber} color="#8a5a2a" roughness={1} />
       </mesh>
     </group>
   )
@@ -269,11 +281,12 @@ export function BellHall() {
 
 /** 휴식 공간: 다다미 마루와 벤치, 붉은 와가사(우산). */
 export function RestHall() {
+  const timber = useSurface('wood')
   return (
     <group>
       <mesh position-y={0.2}>
         <boxGeometry args={[4.4, 0.3, 3.4]} />
-        <meshStandardMaterial color="#a8703a" roughness={0.85} />
+        <meshStandardMaterial {...timber} color="#ac8053" roughness={1} />
       </mesh>
       <mesh position-y={0.37}>
         <boxGeometry args={[3.6, 0.06, 2.6]} />
@@ -286,7 +299,7 @@ export function RestHall() {
       <group position={[0, 0, -1.2]}>
         <mesh position-y={0.85}>
           <boxGeometry args={[3.2, 0.12, 0.6]} />
-          <meshStandardMaterial color="#8a5a2a" />
+          <meshStandardMaterial {...timber} color="#96704f" roughness={1} />
         </mesh>
         {[-1.4, 1.4].map((x) => (
           <mesh key={x} position={[x, 0.6, 0]}>
@@ -302,6 +315,8 @@ export function RestHall() {
       <mesh position={[-1.5, 3.2, 0.3]}>
         <coneGeometry args={[1.8, 0.6, 28]} />
         <meshStandardMaterial
+          onBeforeCompile={roofSnow}
+          customProgramCacheKey={snowProgramKey}
           color="#c8302a"
           roughness={0.7}
           side={DoubleSide}
@@ -310,6 +325,8 @@ export function RestHall() {
       <mesh position={[-1.5, 3.21, 0.3]}>
         <coneGeometry args={[1.2, 0.4, 28]} />
         <meshStandardMaterial
+          onBeforeCompile={roofSnow}
+          customProgramCacheKey={snowProgramKey}
           color="#f4efe6"
           roughness={0.8}
           side={DoubleSide}
