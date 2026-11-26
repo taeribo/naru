@@ -124,25 +124,6 @@ class WorldRoomsTest {
         assertThat(world.tick(now + 24_200)).isEmpty();
     }
 
-    @Test
-    void rejectsThePondAndStopsMovementThatWouldCrossIt() {
-        world.join("visitor", null);
-        long now = System.currentTimeMillis();
-        var visitor = joined(world.tick(now), "visitor");
-
-        world.move("visitor", 8, -13);
-        assertThat(world.tick(now + 100)).isEmpty();
-
-        world.move("visitor", 12, -28);
-        WorldRooms.Player last = null;
-        for (int tick = 2; tick <= 180; tick++) {
-            var update = world.tick(now + tick * 100L);
-            if (!update.isEmpty()) last = player(update, "visitor", visitor.id());
-        }
-        assertThat(last).isNotNull();
-        assertThat(last.z()).isBetween(-6.35, -5.8);
-    }
-
     private static WorldRooms.Joined joined(List<WorldRooms.Delivery> messages, String connection) {
         return (WorldRooms.Joined) messages.stream()
                 .filter(message -> message.connections().contains(connection) && message.event() instanceof WorldRooms.Joined)

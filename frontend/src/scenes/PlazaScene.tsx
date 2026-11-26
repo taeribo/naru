@@ -9,8 +9,11 @@ import { GardenTerrain } from './GardenTerrain'
 import { Hills } from './Hills'
 import { Japan } from './Japan'
 import { PlazaVisitors } from './PlazaVisitors'
-import { Pond } from './Pond'
 import { Sky } from './Sky'
+import { FestivalRim } from './FestivalRim'
+import { Forecourt } from './Forecourt'
+import { OnsenApproach } from './OnsenApproach'
+import { StreetStalls } from './StreetStalls'
 import { groundHeight } from './terrain'
 import { preloadSurfaces } from './surfaces'
 import { Zones } from './Zones'
@@ -182,9 +185,12 @@ export function PlazaScene({
         <Sky />
         <GardenTerrain />
         <EntranceArchitecture />
+        <StreetStalls />
+        <OnsenApproach />
+        <Forecourt />
+        <FestivalRim />
         <Ground />
         <CourtyardLandmarks />
-        <Pond />
         <Village />
         <Fuji />
         <Hills />

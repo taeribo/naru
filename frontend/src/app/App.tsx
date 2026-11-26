@@ -155,7 +155,7 @@ export function App() {
               onClick={visitRestArea}
               disabled={world.status !== 'joined'}
             >
-              휴식공간으로 이동
+              온천으로 이동
             </button>
           </div>
         )}

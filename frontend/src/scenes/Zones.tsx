@@ -8,7 +8,9 @@ import { DoubleSide } from 'three'
 import { roofGeometry } from './shapes'
 import type { WorldPlayer } from '../services/world'
 import type { ReactNode } from 'react'
-import { BellHall, EmaRack, OmikujiBox, OmikujiRack, RestHall } from './Halls'
+import { BellHall, EmaRack, OmikujiBox, OmikujiRack } from './Halls'
+import { OnsenBath } from './OnsenBath'
+import { OnsenHouse } from './OnsenHouse'
 import { ZONES } from './terrain'
 import { getDoorTextures, getDoorTexturesAlt, getSignTexture } from './textures'
 
@@ -16,7 +18,7 @@ export const ZONE_LABELS = {
   bell: '종울리기',
   wish: '소원패',
   fortune: '운세뽑기',
-  rest: '휴식공간',
+  rest: '온천',
 } as const
 
 export type ZoneId = keyof typeof ZONE_LABELS
@@ -30,6 +32,8 @@ function Zone({
   accent,
   padColor,
   onSelect,
+  bare = false,
+  labelAt = [0, 1.1, 4.35],
   children,
 }: {
   position: [number, number, number]
@@ -40,6 +44,9 @@ function Zone({
   accent: string
   padColor: string
   onSelect: () => void
+  /** 받침돌과 접지 그림자 없이 큰 구조물만 놓는 구역. */
+  bare?: boolean
+  labelAt?: [number, number, number]
   children: ReactNode
 }) {
   const [hovered, setHovered] = useState(false)
@@ -60,20 +67,26 @@ function Zone({
       }}
       onPointerOut={() => setHovered(false)}
     >
-      <ContactShade width={13.2} depth={11.6} height={0.054} />
-      <mesh position-y={0.095}>
-        <cylinderGeometry args={[4.18, 4.36, 0.22, 12]} />
-        <meshStandardMaterial color={padColor} roughness={1} />
-      </mesh>
+      {!bare && (
+        <>
+          <ContactShade width={13.2} depth={11.6} height={0.054} />
+          <mesh position-y={0.095}>
+            <cylinderGeometry args={[4.18, 4.36, 0.22, 12]} />
+            <meshStandardMaterial color={padColor} roughness={1} />
+          </mesh>
+        </>
+      )}
       <group scale={scale} position-y={0.1}>
         {children}
       </group>
-      <mesh position={[0, 0.22, 4.25]}>
-        <boxGeometry args={[1.9, 0.2, 0.37]} />
-        <meshStandardMaterial color={accent} roughness={1} />
-      </mesh>
+      {!bare && (
+        <mesh position={[0, 0.22, 4.25]}>
+          <boxGeometry args={[1.9, 0.2, 0.37]} />
+          <meshStandardMaterial color={accent} roughness={1} />
+        </mesh>
+      )}
       {(nearby || hovered) && (
-        <Html position={[0, 1.1, 4.35]} center zIndexRange={[2, 0]}>
+        <Html position={labelAt} center zIndexRange={[2, 0]}>
           <button
             type="button"
             className="zone-label zone-label--nearby"
@@ -223,6 +236,10 @@ export function Zones({
   }
   return (
     <>
+      {/* 탕은 클릭을 가로채지 않아, 물속도 바닥처럼 눌러 걸어 들어갈 수 있다. */}
+      <group position={[ZONES.rest[0], 0, ZONES.rest[1]]}>
+        <OnsenBath />
+      </group>
       <Zone
         position={[ZONES.fortune[0], 0, ZONES.fortune[1]]}
         yaw={0.4}
@@ -268,16 +285,17 @@ export function Zones({
       </Zone>
       <Zone
         position={[ZONES.rest[0], 0, ZONES.rest[1]]}
-        yaw={-0.4}
         label={ZONE_LABELS.rest}
         nearby={closeTo('rest')}
-        scale={1.26}
         accent="#738879"
         padColor="#6b756a"
+        bare
+        labelAt={[-9.5, 1.6, 4]}
         onSelect={() => onSelect('rest')}
       >
-        <TimberShelter open />
-        <RestHall />
+        <group position={[4, 0, -16.5]}>
+          <OnsenHouse />
+        </group>
       </Zone>
     </>
   )

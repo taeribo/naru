@@ -2,7 +2,7 @@ import { CircleGeometry, PlaneGeometry, Vector2 } from 'three'
 import type { MeshStandardMaterial } from 'three'
 import { useSurface } from './surfaces'
 import { useMemo } from 'react'
-import { COURTYARD, POND, STAIRS_END_Z, WORLD_BOUNDS, ZONES } from './terrain'
+import { COURTYARD, STAIRS_END_Z, WORLD_BOUNDS, ZONES } from './terrain'
 
 const shadePaving: MeshStandardMaterial['onBeforeCompile'] = (shader) => {
   shader.vertexShader = shader.vertexShader
@@ -42,20 +42,8 @@ const { minZ, maxZ } = WORLD_BOUNDS
 const { width, depth, centerX, centerZ } = COURTYARD
 const AXIS_WIDTH = 5.6
 const BRANCH_WIDTH = 3.25
-const POND_FRONT = POND.z + POND.depth / 2 + 1.9
-const POND_BACK = POND.z - POND.depth / 2 - 1.9
-const POND_BYPASS_X = POND.width / 2 + 2.75
 const PATHS: [number, number, number, number][] = [
-  [0, (POND_FRONT + STAIRS_END_Z) / 2, AXIS_WIDTH, STAIRS_END_Z - POND_FRONT],
-  [0, (minZ + 1 + POND_BACK) / 2, AXIS_WIDTH, POND_BACK - minZ - 1],
-  [0, POND_FRONT, 2 * POND_BYPASS_X + BRANCH_WIDTH, BRANCH_WIDTH],
-  [0, POND_BACK, 2 * POND_BYPASS_X + BRANCH_WIDTH, BRANCH_WIDTH],
-  ...[-1, 1].map((side): [number, number, number, number] => [
-    POND_BYPASS_X * side,
-    POND.z,
-    BRANCH_WIDTH,
-    POND_FRONT - POND_BACK,
-  ]),
+  [0, (minZ + 1 + STAIRS_END_Z) / 2, AXIS_WIDTH, STAIRS_END_Z - minZ - 1],
   ...Object.values(ZONES).map(([x, z]): [number, number, number, number] => [
     (x + (Math.sign(x) * AXIS_WIDTH) / 2) / 2,
     z,

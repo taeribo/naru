@@ -18,7 +18,6 @@ const GARDEN_GROUPS = [
   [-10.1, 20.8],
   [10.8, 19.5],
   [ZONES.fortune[0] - 4.2, ZONES.fortune[1] + 3.2],
-  [ZONES.rest[0] + 4.2, ZONES.rest[1] + 3.0],
 ] as const
 
 function buildGarden() {

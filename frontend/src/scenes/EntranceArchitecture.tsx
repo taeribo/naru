@@ -25,7 +25,7 @@ type Model =
   | 'mossy-boulders'
 type Position = [number, number, number]
 
-function Architecture({
+export function Architecture({
   model,
   position,
   scale = 1,

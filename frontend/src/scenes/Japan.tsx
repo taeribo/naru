@@ -3,7 +3,7 @@ import { DoubleSide } from 'three'
 import { ZONES } from './terrain'
 import { getNoboriTexture } from './textures'
 
-function Nobori({
+export function Nobori({
   position,
   yaw = 0,
 }: {
