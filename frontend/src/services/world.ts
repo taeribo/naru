@@ -23,7 +23,6 @@ type WorldEvent =
   | { type: 'waiting'; token: string; position: number }
   | { type: 'joined'; token: string; id: string; room: number }
   | { type: 'snapshot'; players: WorldPlayer[] }
-  | { type: 'lantern'; id: string }
 
 const INITIAL: WorldState = {
   status: 'connecting',
@@ -52,7 +51,6 @@ function saveSession(token: string) {
 
 export function useWorld() {
   const [state, setState] = useState<WorldState>(INITIAL)
-  const [lanterns, setLanterns] = useState<string[]>([])
   const socketRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
@@ -66,7 +64,6 @@ export function useWorld() {
     function retry() {
       if (stopped) return
       setState({ ...INITIAL, status: 'offline' })
-      setLanterns([])
       reconnect = window.setTimeout(connect, delay)
       delay = Math.min(delay * 2, RETRY_MAX)
     }
@@ -113,13 +110,6 @@ export function useWorld() {
             case 'snapshot':
               setState((current) => ({ ...current, players: event.players }))
               break
-            case 'lantern':
-              setLanterns((current) =>
-                current.includes(event.id)
-                  ? current
-                  : [...current.slice(-7), event.id],
-              )
-              break
           }
         })
         socket.addEventListener(
@@ -154,9 +144,5 @@ export function useWorld() {
     }
   }
 
-  function finishLantern(id: string) {
-    setLanterns((current) => current.filter((item) => item !== id))
-  }
-
-  return { ...state, lanterns, finishLantern, move }
+  return { ...state, move }
 }

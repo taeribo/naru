@@ -11,7 +11,14 @@ import {
   getWoodTexture,
 } from './textures'
 
-export type ZoneId = 'fortune' | 'wish'
+export const ZONE_LABELS = {
+  bell: '종울리기',
+  wish: '소원패',
+  fortune: '운세뽑기',
+  rest: '휴식공간',
+} as const
+
+export type ZoneId = keyof typeof ZONE_LABELS
 
 function Zone({
   position,
@@ -29,11 +36,11 @@ function Zone({
   hint: string
   ringColor: string
   padColor: string
-  onSelect?: () => void
+  onSelect: () => void
   children: ReactNode
 }) {
   function select(event: ThreeEvent<MouseEvent>) {
-    if (!onSelect || event.delta > 5) return
+    if (event.delta > 5) return
     event.stopPropagation()
     onSelect()
   }
@@ -43,7 +50,7 @@ function Zone({
       position={position}
       rotation-y={yaw}
       onClick={select}
-      onPointerOver={() => onSelect && (document.body.style.cursor = 'pointer')}
+      onPointerOver={() => (document.body.style.cursor = 'pointer')}
       onPointerOut={() => (document.body.style.cursor = '')}
     >
       <mesh position-y={0.04}>
@@ -172,7 +179,7 @@ export function Zones({ onSelect }: { onSelect: (zone: ZoneId) => void }) {
       <Zone
         position={[ZONES.fortune[0], 0, ZONES.fortune[1]]}
         yaw={0.4}
-        label="☾ 운세 뽑기"
+        label={ZONE_LABELS.fortune}
         hint="한지 운세"
         ringColor="#9c93ff"
         padColor="#2a2750"
@@ -189,7 +196,7 @@ export function Zones({ onSelect }: { onSelect: (zone: ZoneId) => void }) {
       <Zone
         position={[ZONES.wish[0], 0, ZONES.wish[1]]}
         yaw={-0.4}
-        label="◇ 소원패"
+        label={ZONE_LABELS.wish}
         hint="소원 작성"
         ringColor="#ffa24d"
         padColor="#4a2a2c"
@@ -200,20 +207,22 @@ export function Zones({ onSelect }: { onSelect: (zone: ZoneId) => void }) {
       <Zone
         position={[ZONES.bell[0], 0, ZONES.bell[1]]}
         yaw={0.4}
-        label="종 울리기"
+        label={ZONE_LABELS.bell}
         hint="마음 정리"
         ringColor="#d8b07a"
         padColor="#3a2f2a"
+        onSelect={() => onSelect('bell')}
       >
         <BellHall />
       </Zone>
       <Zone
         position={[ZONES.rest[0], 0, ZONES.rest[1]]}
         yaw={-0.4}
-        label="휴식 공간"
+        label={ZONE_LABELS.rest}
         hint="고요한 쉼"
         ringColor="#7fd6a0"
         padColor="#22362e"
+        onSelect={() => onSelect('rest')}
       >
         <RestHall />
       </Zone>

@@ -39,7 +39,7 @@ export function WishList({ author }: { author: string }) {
           if (controller.signal.aborted) break
           setPage(latest)
           setListStatus(
-            latest.items.length ? '' : '아직 다른 사람이 남긴 소원이 없어요.',
+            latest.items.length ? '' : '아직 다른 사람이 건 소원패가 없어요.',
           )
         } catch {
           if (!controller.signal.aborted) {
@@ -104,7 +104,7 @@ export function WishList({ author }: { author: string }) {
 
   return (
     <section className="wish-list" aria-labelledby="wish-list-title">
-      <h3 id="wish-list-title">다른 사람의 소원</h3>
+      <h3 id="wish-list-title">공개 소원패</h3>
       {listStatus && <p role="status">{listStatus}</p>}
       {page.items.length > 0 && (
         <ul aria-busy={loadingMore}>

@@ -200,6 +200,7 @@ textarea:focus-visible {
 @media (max-width: 600px) {
   .plaza-header nav {
     position: static;
+    grid-template-columns: repeat(2, max-content);
     width: fit-content;
     margin-top: 0.5rem;
   }
@@ -357,4 +358,23 @@ textarea:focus-visible {
 .plaza-direction:disabled {
   opacity: 0.48;
   cursor: default;
+}
+
+@media (max-width: 600px) {
+  .plaza-button--menu {
+    width: 100%;
+    min-width: 6.4rem;
+  }
+}
+
+.zone-panel {
+  display: grid;
+  justify-items: start;
+  gap: 0.7rem;
+  padding-block: 0.8rem;
+}
+
+.zone-panel p {
+  min-height: 1.4em;
+  margin: 0;
 }

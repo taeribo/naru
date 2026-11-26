@@ -114,14 +114,6 @@ public class WorldRooms {
         return member == null || member.connection == null || member.room == null ? null : member.room.number;
     }
 
-    synchronized List<String> peers(String token) {
-        Member member = token == null ? null : members.get(token);
-        if (member == null || member.connection == null || member.room == null) return List.of();
-        return member.room.members.stream()
-                .filter(peer -> peer != member && peer.connection != null)
-                .map(peer -> peer.connection).toList();
-    }
-
     private void expire(long now) {
         var iterator = members.values().iterator();
         while (iterator.hasNext()) {
