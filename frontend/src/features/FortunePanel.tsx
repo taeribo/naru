@@ -48,7 +48,8 @@ export function FortunePanel() {
     }
   }
 
-  if (result) return <FortunePaper message={result.content} />
+  if (result)
+    return <FortunePaper grade={result.grade} message={result.content} />
 
   return (
     <div className="fortune-panel">

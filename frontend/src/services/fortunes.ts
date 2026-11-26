@@ -3,9 +3,15 @@ export interface FortuneCategory {
   name: string
 }
 
+export interface FortuneGrade {
+  hanja: string
+  name: string
+}
+
 export interface DailyFortune {
   category: string
   date: string
+  grade: FortuneGrade
   content: string
 }
 

@@ -35,6 +35,8 @@ class FortuneApiTest {
                     .andExpect(header().string("Cache-Control", containsString("private")))
                     .andExpect(jsonPath("$.category").value(code))
                     .andExpect(jsonPath("$.date").isString())
+                    .andExpect(jsonPath("$.grade.hanja").isNotEmpty())
+                    .andExpect(jsonPath("$.grade.name").isNotEmpty())
                     .andExpect(jsonPath("$.content").value(containsString("\n")));
         }
         mvc.perform(get("/api/fortunes/STUDY").header("X-Visitor-Id", VISITOR_ID))
