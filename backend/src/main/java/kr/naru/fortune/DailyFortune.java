@@ -20,6 +20,7 @@ import java.util.UUID;
 class DailyFortune {
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
     private static final String HMAC = "HmacSHA256";
+    private static final int GREAT_LUCK_PARTS = 3;
 
     private final FortuneCatalog catalog;
     private final Environment environment;
@@ -36,11 +37,11 @@ class DailyFortune {
 
         String key = environment.getProperty("NARU_FORTUNE_KEY_" + release.keyId(), "");
         if (!key.matches("[0-9a-fA-F]{64}")) throw unavailable();
-        var message = pick(release, HexFormat.of().parseHex(key), visitor, date, category);
-        return new Result(category, date, message.content());
+        var draw = pick(release, HexFormat.of().parseHex(key), visitor, date, category);
+        return new Result(category, date, draw.rank().label(), draw.message().content());
     }
 
-    static FortuneCatalog.Message pick(FortuneCatalog.Release release, byte[] key, UUID visitor,
+    static Draw pick(FortuneCatalog.Release release, byte[] key, UUID visitor,
                                        LocalDate date, FortuneCategory category) {
         String seed = "naru-fortune|" + release.version() + "|" + visitor + "|" + date + "|" + category;
         try {
@@ -52,7 +53,10 @@ class DailyFortune {
                 if (ticket < 0) {
                     var pool = release.pool(category, tone);
                     if (pool.isEmpty()) throw unavailable();
-                    return pool.get(index(mac, seed + "|message|" + tone, pool.size()));
+                    var message = pool.get(index(mac, seed + "|message|" + tone, pool.size()));
+                    boolean greatLuck = tone == FortuneTone.HOPE
+                            && index(mac, seed + "|rank", GREAT_LUCK_PARTS) == 0;
+                    return new Draw(message, FortuneRank.forTone(tone, greatLuck));
                 }
             }
             throw unavailable();
@@ -70,5 +74,7 @@ class DailyFortune {
         return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Fortune temporarily unavailable");
     }
 
-    record Result(FortuneCategory category, LocalDate date, String content) {}
+    record Draw(FortuneCatalog.Message message, FortuneRank rank) {}
+
+    record Result(FortuneCategory category, LocalDate date, FortuneRank.Label grade, String content) {}
 }

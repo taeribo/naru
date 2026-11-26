@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { FortuneGrade } from '../services/fortunes'
 
 const UNFOLD_DURATION = 1_000
 
@@ -40,12 +41,18 @@ function playPaperSound() {
   }
 }
 
-export function FortunePaper({ message }: { message: string }) {
+export function FortunePaper({
+  grade,
+  message,
+}: {
+  grade: FortuneGrade
+  message: string
+}) {
   const [phase, setPhase] = useState<'folded' | 'unfolding' | 'open'>('folded')
   const started = useRef(false)
   const timer = useRef<number | undefined>(undefined)
   const fold = useRef<HTMLButtonElement>(null)
-  const text = useRef<HTMLParagraphElement>(null)
+  const text = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fold.current?.focus({ preventScroll: true })
@@ -111,9 +118,20 @@ export function FortunePaper({ message }: { message: string }) {
             <article className="fortune-paper" aria-label="오늘의 운세">
               <div aria-live="polite" aria-atomic="true">
                 {phase === 'open' && (
-                  <p ref={text} tabIndex={-1} className="fortune-paper-message">
-                    {message}
-                  </p>
+                  <div
+                    ref={text}
+                    tabIndex={-1}
+                    className="fortune-paper-result"
+                  >
+                    {grade && (
+                      <p className="fortune-paper-grade">
+                        <span lang="ja">{grade.hanja}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>{grade.name}</span>
+                      </p>
+                    )}
+                    <p className="fortune-paper-message">{message}</p>
+                  </div>
                 )}
               </div>
             </article>

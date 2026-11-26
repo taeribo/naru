@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -73,14 +74,23 @@ class DailyFortuneTest {
             assertThat(total).isEqualTo(100);
         }
         var counts = new EnumMap<FortuneTone, Integer>(FortuneTone.class);
+        var ranks = new EnumMap<FortuneRank, Integer>(FortuneRank.class);
         byte[] key = java.util.HexFormat.of().parseHex(TEST_KEY);
         for (int index = 1; index <= 20_000; index++) {
             var choice = DailyFortune.pick(release, key, new UUID(17, index), FIRST_DAY, FortuneCategory.GROWTH);
-            counts.merge(choice.type(), 1, Integer::sum);
+            counts.merge(choice.message().type(), 1, Integer::sum);
+            ranks.merge(choice.rank(), 1, Integer::sum);
+            assertThat(choice.rank() == FortuneRank.CAUTION).isEqualTo(choice.message().type() == FortuneTone.CAUTION);
         }
         for (var tone : FortuneTone.values()) {
             assertThat(counts.get(tone) / 200.0).isCloseTo((double) release.weight(tone), org.assertj.core.data.Offset.offset(1.2));
         }
+        var expectedRanks = Map.of(
+                FortuneRank.GREAT_LUCK, 10.0, FortuneRank.LUCK, 20.0, FortuneRank.MEDIUM_LUCK, 30.0,
+                FortuneRank.SMALL_LUCK, 20.0, FortuneRank.LATER_LUCK, 15.0, FortuneRank.CAUTION, 5.0);
+        assertThat(ranks.keySet()).containsExactlyInAnyOrder(FortuneRank.values());
+        expectedRanks.forEach((rank, expected) ->
+                assertThat(ranks.get(rank) / 200.0).isCloseTo(expected, org.assertj.core.data.Offset.offset(1.2)));
     }
 
     @Test

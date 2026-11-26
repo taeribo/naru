@@ -192,7 +192,24 @@
   animation: fortune-appear 300ms ease-out both;
 }
 
-.fortune-paper-message:focus {
+.fortune-paper-grade {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin: 0 0 0.65rem;
+  color: #762d28;
+  font-family: 'Noto Serif CJK KR', 'AppleMyungjo', Batang, serif;
+  font-size: clamp(1.05rem, 3.5vw, 1.35rem);
+  font-weight: 600;
+  animation: fortune-appear 300ms ease-out both;
+}
+
+.fortune-paper-grade [lang='ja'] {
+  font-size: 1.28em;
+}
+
+.fortune-paper-result:focus {
   outline: none;
 }
 
