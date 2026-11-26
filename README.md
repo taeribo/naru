@@ -50,3 +50,8 @@ npm run format:check
 Windows 명령 프롬프트에서는 `gradlew.bat test build` 및 `gradlew.bat bootRun`을 사용합니다. 백엔드 실행 후 별도 터미널에서 `curl -i http://localhost:8080/api/health`를 실행합니다. 첫 설치에는 npm 레지스트리, Gradle 배포 서버, Gradle Plugin Portal, Maven Central에 접근할 수 있어야 합니다.
 
 [프로젝트 구조와 팀 개발 기준](docs/development.md)
+
+
+## 팀 공통 AI 지침
+
+Codex와 Claude Code는 저장소 루트의 [공통 AI 개발 지침](AGENTS.md)을 따른다. Claude Code는 [CLAUDE.md](CLAUDE.md)에서 같은 파일을 불러온다. 현재 목표와 초기 디자인 이미지는 [시각 레퍼런스](docs/references/README.md)에서 확인할 수 있다.
