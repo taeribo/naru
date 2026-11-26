@@ -312,3 +312,49 @@ textarea:focus-visible {
   margin: 0.15rem auto 0;
   background: linear-gradient(90deg, transparent, #ffe2a2, transparent);
 }
+
+.plaza-movement {
+  position: absolute;
+  z-index: 3;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 2.95rem);
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  gap: 3px;
+  touch-action: none;
+  user-select: none;
+}
+
+.plaza-direction {
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid #bd9a77a6;
+  border-radius: 0.7rem;
+  background: #261b34da;
+  color: #ffe2ad;
+  font: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.plaza-direction[data-direction='up'] {
+  grid-column: 2;
+}
+
+.plaza-direction[data-direction='left'] {
+  grid-column: 1;
+}
+
+.plaza-direction:active:not(:disabled) {
+  background: #654863;
+}
+
+.plaza-direction:focus-visible {
+  outline: 2px solid #fff3d6;
+  outline-offset: 2px;
+}
+
+.plaza-direction:disabled {
+  opacity: 0.48;
+  cursor: default;
+}

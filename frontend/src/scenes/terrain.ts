@@ -1,6 +1,9 @@
 // 맵 배치(위에서 본 구상도): 맨 위 풍등 연못 → 가운데 벚꽃나무 → 건물 4채 → 아래 입장 계단과 붉은 도리이.
 // 입장 계단·스폰 값은 서버(WorldRooms.java)의 스폰·이동 제한과 같아야 한다.
 
+/** 방문객이 움직일 수 있는 범위. 서버(WorldRooms.java)의 move 검사와 같아야 한다. */
+export const WORLD_BOUNDS = { minX: -27, maxX: 27, minZ: -19, maxZ: 36 }
+
 /** 풍등을 띄우는 큰 연못(맨 위). */
 export const POND = { cx: 0, cz: -26.5, width: 54, depth: 14, radius: 4 }
 

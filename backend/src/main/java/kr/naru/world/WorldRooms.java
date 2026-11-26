@@ -56,10 +56,7 @@ public class WorldRooms {
         if (member == null) return;
         member.connection = null;
         member.leftAt = System.currentTimeMillis();
-        if (member.room == null) {
-            members.remove(member.token);
-            queue.remove(member);
-        } else {
+        if (member.room != null) {
             member.targetX = member.x;
             member.targetZ = member.z;
             member.room.dirty = true;
@@ -80,6 +77,7 @@ public class WorldRooms {
         List<Delivery> deliveries = new ArrayList<>();
         int position = 0;
         for (Member member : queue) {
+            if (member.connection == null) continue;
             position++;
             if (member.needsWelcome || member.queuePosition != position) {
                 deliveries.add(new Delivery(List.of(member.connection),
@@ -129,17 +127,24 @@ public class WorldRooms {
         while (iterator.hasNext()) {
             Member member = iterator.next();
             if (member.leftAt == 0 || now - member.leftAt < RECONNECT_GRACE) continue;
-            member.room.members.remove(member);
-            member.room.dirty = true;
+            if (member.room == null) {
+                queue.remove(member);
+            } else {
+                member.room.members.remove(member);
+                member.room.dirty = true;
+            }
             iterator.remove();
         }
     }
 
     private void fillQueue() {
-        while (!queue.isEmpty()) {
+        var waiting = queue.iterator();
+        while (waiting.hasNext()) {
+            Member member = waiting.next();
+            if (member.connection == null) continue;
             Room room = availableRoom();
             if (room == null) return;
-            Member member = queue.removeFirst();
+            waiting.remove();
             member.room = room;
             member.needsWelcome = true;
             int spawn = room.members.size();

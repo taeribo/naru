@@ -77,12 +77,14 @@ function supportsWebGl() {
 export function PlazaScene({
   launchId,
   onComplete,
-  onSelectZone,
+  onOpenZone,
+  onCameraBearing,
   world,
 }: {
   launchId: number | null
   onComplete: () => void
-  onSelectZone: (zone: ZoneId) => void
+  onOpenZone: (zone: ZoneId) => void
+  onCameraBearing: (bearing: number) => void
   world: {
     players: WorldPlayer[]
     id: string | null
@@ -131,7 +133,7 @@ export function PlazaScene({
       <Dragon />
       <LanternStrings />
       <FlowerBed />
-      <Zones onSelect={onSelectZone} />
+      <Zones onSelect={onOpenZone} />
       <CherryPetals />
       <PlazaVisitors
         players={world.players}
@@ -163,6 +165,9 @@ export function PlazaScene({
       ))}
       <OrbitControls
         target={CAMERA_TARGET}
+        onChange={(event) => {
+          if (event) onCameraBearing(event.target.getAzimuthalAngle())
+        }}
         enableDamping
         enablePan={false}
         minDistance={14}
