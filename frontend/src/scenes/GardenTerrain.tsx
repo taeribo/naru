@@ -13,19 +13,9 @@ import type { InstancedMesh } from 'three'
 import { GardenPines } from './GardenPines'
 import type { PinePlacement } from './GardenPines'
 import { RIM_SEPARATORS } from './festivalLayout'
-import { FRONT_WALL_Z, WORLD_BOUNDS, ZONES } from './terrain'
+import { FRONT_WALL_Z, ZONES, elevation } from './terrain'
 import { createShrubGeometry } from './shrubGeometry'
 import { getGravelTexture } from './textures'
-
-const { minX, maxX, minZ, maxZ } = WORLD_BOUNDS
-
-// The walkable floor stays level. Hills rise only outside the play area.
-function elevation(x: number, z: number) {
-  const beyond = Math.max(minX - x, x - maxX, minZ - z, z - maxZ, 0)
-  const rise = Math.min(beyond / 18, 1)
-  const wave = Math.sin(x * 0.064 + Math.cos(z * 0.047) * 1.7)
-  return -0.045 + rise * rise * (1.8 + wave * 0.77 + Math.sin(z * 0.08) * 0.5)
-}
 
 function terrainGeometry() {
   const geometry = new PlaneGeometry(292, 252, 112, 102)

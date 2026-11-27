@@ -17,7 +17,7 @@ import { getBarkTexture, getBlossomTexture } from './textures'
 const GOLDEN_ANGLE = 2.39996
 const MAX_DEPTH = 3
 const TREE_SCALE = 1.6
-const FLOWER_COUNT = 16000
+const FLOWER_COUNT = 26000
 const FLOWER_SIZE = 1.9
 type Anchor = { point: Vector3; spread: number }
 
@@ -203,7 +203,7 @@ export function CherryTree() {
         position={[0, 4, 2]}
         color="#ffd5ab"
         intensity={64}
-        distance={24}
+        distance={40}
       />
     </group>
   )

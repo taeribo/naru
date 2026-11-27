@@ -58,3 +58,12 @@ export function groundHeight(x: number, z: number) {
   }
   return 0
 }
+
+// The walkable floor stays level. Hills rise only outside the play area.
+export function elevation(x: number, z: number) {
+  const { minX, maxX, minZ, maxZ } = WORLD_BOUNDS
+  const beyond = Math.max(minX - x, x - maxX, minZ - z, z - maxZ, 0)
+  const rise = Math.min(beyond / 18, 1)
+  const wave = Math.sin(x * 0.064 + Math.cos(z * 0.047) * 1.7)
+  return -0.045 + rise * rise * (1.8 + wave * 0.77 + Math.sin(z * 0.08) * 0.5)
+}
