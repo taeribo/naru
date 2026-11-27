@@ -7,7 +7,7 @@ import { WishPanel } from '../features/WishPanel'
 import { PlazaMovement } from '../scenes/PlazaMovement'
 import type { PlazaDirection } from '../scenes/PlazaMovement'
 import { PlazaScene } from '../scenes/PlazaScene'
-import { WORLD_BOUNDS, ZONES } from '../scenes/terrain'
+import { ZONES, stepToward } from '../scenes/terrain'
 import { ZONE_LABELS } from '../scenes/Zones'
 import type { ZoneId } from '../scenes/Zones'
 import './app.css'
@@ -69,13 +69,11 @@ export function App() {
       { up: Math.PI, left: -Math.PI / 2, down: 0, right: Math.PI / 2 }[
         direction
       ]
-    const x = Math.max(
-      WORLD_BOUNDS.minX,
-      Math.min(WORLD_BOUNDS.maxX, ownPlayer.x + Math.sin(angle) * 1.4),
-    )
-    const z = Math.max(
-      WORLD_BOUNDS.minZ,
-      Math.min(WORLD_BOUNDS.maxZ, ownPlayer.z + Math.cos(angle) * 1.4),
+    const [x, z] = stepToward(
+      ownPlayer.x,
+      ownPlayer.z,
+      ownPlayer.x + Math.sin(angle) * 1.4,
+      ownPlayer.z + Math.cos(angle) * 1.4,
     )
     world.move(x, z)
   }

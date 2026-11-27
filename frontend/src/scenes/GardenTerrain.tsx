@@ -13,7 +13,14 @@ import type { InstancedMesh } from 'three'
 import { GardenPines } from './GardenPines'
 import type { PinePlacement } from './GardenPines'
 import { RIM_SEPARATORS } from './festivalLayout'
-import { FRONT_WALL_Z, ZONES, elevation } from './terrain'
+import {
+  AVENUE,
+  CASTLE_SITE,
+  FRONT_WALL_Z,
+  ZONES,
+  elevation,
+  inRect,
+} from './terrain'
 import { createShrubGeometry } from './shrubGeometry'
 import { getGravelTexture } from './textures'
 
@@ -117,7 +124,12 @@ const TREES = [
       ]),
     )
     .filter(([x, z]) => Math.abs(x) >= 57 && z < FRONT_WALL_Z),
-]
+  // 성 부지와 참배길에는 나무를 심지 않는다.
+].filter(
+  ([x, z]) =>
+    !inRect(x, z, CASTLE_SITE, 2) &&
+    !AVENUE.some((area) => inRect(x, z, area, 3)),
+)
 
 const UNDERGROWTH = GARDEN_TREE_GROUPS.flatMap(([x, z, s], index) =>
   Array.from({ length: 5 }, (_, group) => {

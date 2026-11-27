@@ -14,7 +14,7 @@ import {
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { CASTLE_POSITION } from './Castle'
-import { WORLD_BOUNDS, elevation } from './terrain'
+import { AVENUE, CASTLE_SITE, WORLD_BOUNDS, elevation, inRect } from './terrain'
 import { Plaza } from './StoneCourtyard'
 import { Stairs } from './Stairs'
 import { roofGeometry } from './shapes'
@@ -215,6 +215,12 @@ function buildVillage() {
       continue
     // 광장 뒤쪽 멀리에 마을을 둔다.
     if (Math.abs(x) < 27 || z > WORLD_BOUNDS.minZ - 12) continue
+    // 성 부지와 참배길은 비워 둔다.
+    if (
+      inRect(x, z, CASTLE_SITE, 6) ||
+      AVENUE.some((area) => inRect(x, z, area, 6))
+    )
+      continue
     // 언덕 지형 위에 앉힌다: 발치 평균 높이보다 살짝 위에 맞추고 기단을 낮은 모서리까지 늘려 틈을 메운다.
     const halfW = width / 2 + 0.45
     const halfD = depth / 2 + 0.45

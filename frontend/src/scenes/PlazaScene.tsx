@@ -3,6 +3,7 @@ import { CherryPetals } from './CherryPetals'
 import { CherryTree } from './CherryTree'
 import { EntranceArchitecture } from './EntranceArchitecture'
 import { CourtyardLandmarks } from './CourtyardLandmarks'
+import { Avenue } from './Avenue'
 import { FlowerBed, Ground, Village } from './Landmarks'
 import { Fuji } from './Fuji'
 import { GardenTerrain } from './GardenTerrain'
@@ -201,6 +202,7 @@ export function PlazaScene({
         <Forecourt />
         <FestivalRim />
         <Ground />
+        <Avenue />
         <CourtyardLandmarks />
         <Village />
         <Fuji />

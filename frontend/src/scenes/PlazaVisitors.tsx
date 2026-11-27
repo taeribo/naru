@@ -2,7 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import type { Group } from 'three'
 import type { WorldPlayer } from '../services/world'
-import { COURTYARD, groundHeight } from './terrain'
+import { MAP_BOUNDS, groundHeight, isWalkable } from './terrain'
 
 function Visitor({ player, own }: { player: WorldPlayer; own: boolean }) {
   const group = useRef<Group>(null)
@@ -73,13 +73,23 @@ export function PlazaVisitors({
       {ownId !== null && (
         <mesh
           rotation-x={-Math.PI / 2}
-          position={[COURTYARD.centerX, 0.015, COURTYARD.centerZ]}
+          position={[
+            (MAP_BOUNDS.minX + MAP_BOUNDS.maxX) / 2,
+            0.015,
+            (MAP_BOUNDS.minZ + MAP_BOUNDS.maxZ) / 2,
+          ]}
           onClick={(event) => {
             if (event.delta > 5) return
+            if (!isWalkable(event.point.x, event.point.z)) return
             onMove(event.point.x, event.point.z)
           }}
         >
-          <planeGeometry args={[COURTYARD.width, COURTYARD.depth]} />
+          <planeGeometry
+            args={[
+              MAP_BOUNDS.maxX - MAP_BOUNDS.minX,
+              MAP_BOUNDS.maxZ - MAP_BOUNDS.minZ,
+            ]}
+          />
           <meshBasicMaterial visible={false} />
         </mesh>
       )}
