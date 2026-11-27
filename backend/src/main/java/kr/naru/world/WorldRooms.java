@@ -17,6 +17,10 @@ public class WorldRooms {
     private static final long RECONNECT_GRACE = 15_000;
 
     private final int maxRooms;
+    // Match the front movement limit and entrance spawn in terrain.ts.
+    private static final double FRONT_LIMIT_Z = 46;
+    private static final double ENTRY_SPAWN_Z = FRONT_LIMIT_Z - 2.5;
+
     private final Map<Integer, Room> rooms = new LinkedHashMap<>();
     private final Map<String, Member> members = new LinkedHashMap<>();
     private final Map<String, Member> connections = new LinkedHashMap<>();
@@ -73,7 +77,7 @@ public class WorldRooms {
     public synchronized void move(String connection, double x, double z) {
         Member member = connections.get(connection);
         if (member == null || member.room == null || !Double.isFinite(x) || !Double.isFinite(z)) return;
-        if (x < -54 || x > 54 || z < -38 || z > 72 || Math.hypot(x, z) < 2.7) return;
+        if (x < -54 || x > 54 || z < -38 || z > FRONT_LIMIT_Z || insideCherryBed(x, z)) return;
         member.targetX = x;
         member.targetZ = z;
     }
@@ -139,7 +143,7 @@ public class WorldRooms {
     private static void placeAtEntrance(Member member, int slot) {
         // 계단과 좌우 건물 앞의 중앙 진입로에 배치한다.
         member.x = member.targetX = (slot % 8 - 3.5) * 0.64;
-        member.z = member.targetZ = 34.5 + slot / 8 * 0.75;
+        member.z = member.targetZ = ENTRY_SPAWN_Z + slot / 8 * 0.75;
     }
 
     private void fillQueue() {
@@ -177,6 +181,11 @@ public class WorldRooms {
         return room;
     }
 
+    // Match CHERRY_POSITION and the flower bed radius in the 3D scene.
+    private static boolean insideCherryBed(double x, double z) {
+        return Math.hypot(x + 7.8, z - 2.5) < 5.25;
+    }
+
     private static boolean advance(Member member) {
         double dx = member.targetX - member.x;
         double dz = member.targetZ - member.z;
@@ -185,7 +194,7 @@ public class WorldRooms {
         double step = Math.min(1, 0.45 / distance);
         double x = member.x + dx * step;
         double z = member.z + dz * step;
-        if (Math.hypot(x, z) < 2.65) {
+        if (insideCherryBed(x, z)) {
             member.targetX = member.x;
             member.targetZ = member.z;
             return false;

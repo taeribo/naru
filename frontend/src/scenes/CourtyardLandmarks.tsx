@@ -10,7 +10,7 @@ import { useSurface } from './surfaces'
 import { getFacadeGlowTexture, getFacadeTexture } from './textures'
 import { STAIRS, WORLD_BOUNDS, ZONES } from './terrain'
 
-export const SANCTUARY_Z = WORLD_BOUNDS.minZ - 9
+export const SANCTUARY_Z = WORLD_BOUNDS.minZ + 7
 
 const GARDEN_GROUPS = [
   [-8.6, STAIRS.bottomZ + 6.6],
@@ -65,7 +65,7 @@ export function CourtyardLandmarks() {
 
   return (
     <>
-      <group position={[0, 0, SANCTUARY_Z]} scale={[1.41, 1.73, 1.2]}>
+      <group position={[18.4, 0, SANCTUARY_Z]} scale={[1.57, 1.74, 1.24]}>
         <ContactShade width={23} depth={12} />
         <mesh position-y={0.63}>
           <boxGeometry args={[16, 1.24, 8.8]} />
@@ -82,7 +82,7 @@ export function CourtyardLandmarks() {
               map={facade}
               emissiveMap={facadeGlow}
               emissive="#ffd397"
-              emissiveIntensity={1.25}
+              emissiveIntensity={1.55}
               roughness={0.88}
             />
           </mesh>
@@ -115,7 +115,7 @@ export function CourtyardLandmarks() {
             map={facade}
             emissiveMap={facadeGlow}
             emissive="#ffd397"
-            emissiveIntensity={0.76}
+            emissiveIntensity={1.06}
             roughness={1}
           />
         </mesh>

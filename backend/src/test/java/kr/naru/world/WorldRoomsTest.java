@@ -59,7 +59,7 @@ class WorldRoomsTest {
         var initial = world.tick(now);
         var visitor = joined(initial, "initial");
         var spawn = player(initial, "initial", visitor.id());
-        assertThat(spawn.z()).isGreaterThan(33);
+        assertThat(spawn.z()).isBetween(43.5, 46.0);
         assertThat(Math.abs(spawn.x())).isLessThan(3);
 
         world.move("initial", spawn.x(), 17);
@@ -108,7 +108,7 @@ class WorldRoomsTest {
         long now = System.currentTimeMillis();
         var visitor = joined(world.tick(now), "visitor");
 
-        world.move("visitor", 54, 72);
+        world.move("visitor", 54, 46);
         List<WorldRooms.Delivery> movement = List.of();
         for (int tick = 1; tick <= 240; tick++) {
             var update = world.tick(now + tick * 100L);
@@ -116,12 +116,30 @@ class WorldRoomsTest {
         }
         var atCorner = player(movement, "visitor", visitor.id());
         assertThat(atCorner.x()).isEqualTo(54);
-        assertThat(atCorner.z()).isEqualTo(72);
+        assertThat(atCorner.z()).isEqualTo(46);
 
-        world.move("visitor", 54.1, 72);
+        world.move("visitor", 54.1, 46);
         assertThat(world.tick(now + 24_100)).isEmpty();
-        world.move("visitor", 54, 72.1);
+        world.move("visitor", 54, 46.1);
         assertThat(world.tick(now + 24_200)).isEmpty();
+    }
+
+    @Test
+    void blocksTheRelocatedCherryBedAndLeavesTheCentralWalkwayOpen() {
+        world.join("visitor", null);
+        long now = System.currentTimeMillis();
+        var visitor = joined(world.tick(now), "visitor");
+
+        world.move("visitor", -7.8, 2.5);
+        assertThat(world.tick(now + 100)).isEmpty();
+
+        world.move("visitor", 0, 0);
+        WorldRooms.Player last = null;
+        for (int tick = 2; tick <= 120; tick++) {
+            var update = world.tick(now + tick * 100L);
+            if (!update.isEmpty()) last = player(update, "visitor", visitor.id());
+        }
+        assertThat(last).isEqualTo(new WorldRooms.Player(visitor.id(), 0, 0));
     }
 
     private static WorldRooms.Joined joined(List<WorldRooms.Delivery> messages, String connection) {

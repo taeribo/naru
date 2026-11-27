@@ -2,7 +2,14 @@ import { CircleGeometry, PlaneGeometry, Vector2 } from 'three'
 import type { MeshStandardMaterial } from 'three'
 import { useSurface } from './surfaces'
 import { useMemo } from 'react'
-import { COURTYARD, STAIRS_END_Z, WORLD_BOUNDS, ZONES } from './terrain'
+import {
+  CHERRY_POSITION,
+  COURTYARD,
+  STAIRS,
+  STAIRS_END_Z,
+  WORLD_BOUNDS,
+  ZONES,
+} from './terrain'
 
 const shadePaving: MeshStandardMaterial['onBeforeCompile'] = (shader) => {
   shader.vertexShader = shader.vertexShader
@@ -37,7 +44,7 @@ const shadePaving: MeshStandardMaterial['onBeforeCompile'] = (shader) => {
 }
 
 // 건물 사이로 난 돌길(구상도의 회색 길). 중심 x, z와 가로·세로 길이.
-const SOUTH_PATH_START = 34.5
+const SOUTH_PATH_START = STAIRS.bottomZ
 const { minZ, maxZ } = WORLD_BOUNDS
 const { width, depth, centerX, centerZ } = COURTYARD
 const AXIS_WIDTH = 5.6
@@ -51,12 +58,7 @@ const PATHS: [number, number, number, number][] = [
     BRANCH_WIDTH,
   ]),
   [0, 32, 14, 5],
-  [
-    0,
-    (SOUTH_PATH_START + maxZ - 4) / 2,
-    AXIS_WIDTH,
-    maxZ - 4 - SOUTH_PATH_START,
-  ],
+  [0, (SOUTH_PATH_START + maxZ) / 2, AXIS_WIDTH, maxZ - SOUTH_PATH_START],
 ]
 
 /** 어두운 자갈 바닥 위에 돌길과 광장. */
@@ -144,7 +146,7 @@ export function Plaza() {
       <mesh
         geometry={courts[0]}
         rotation-x={-Math.PI / 2}
-        position={[0, 0.052, 0]}
+        position={[CHERRY_POSITION[0], 0.052, CHERRY_POSITION[2]]}
       >
         <meshStandardMaterial
           {...stone}

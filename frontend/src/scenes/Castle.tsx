@@ -11,7 +11,7 @@ import {
   getCastleWallTexture,
 } from './textures'
 
-export const CASTLE_POSITION: [number, number] = [-30, -56]
+export const CASTLE_POSITION: [number, number] = [-56, -54]
 
 const GOLD = '#e8b84a'
 const ROOF_TINT = '#90949b'
@@ -62,7 +62,7 @@ export function Castle() {
     <group
       position={[CASTLE_POSITION[0], 0, CASTLE_POSITION[1]]}
       rotation-y={0.34}
-      scale={0.95}
+      scale={0.88}
     >
       {/* 돌담(이시가키): 아래가 넓은 사각뿔대 */}
       <mesh position-y={STONE_BASE / 2} rotation-y={Math.PI / 4}>

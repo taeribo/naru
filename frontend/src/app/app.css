@@ -22,28 +22,29 @@ body {
 
 .plaza-header {
   position: absolute;
-  inset: max(1.25rem, env(safe-area-inset-top)) 1.25rem auto;
-  text-align: center;
+  inset: max(1.25rem, env(safe-area-inset-top))
+    max(1.25rem, env(safe-area-inset-right)) auto
+    max(1.25rem, env(safe-area-inset-left));
   pointer-events: none;
 }
 
 .plaza-header h1 {
-  margin: 0;
-  font-family: 'Nanum Myeongjo', 'AppleMyungjo', Georgia, serif;
-  font-size: clamp(2.85rem, 8vw, 5rem);
+  width: fit-content;
+  margin: 0 0 0.65rem 0.15rem;
+  font-family:
+    'Yoon 성광체 가로', '윤 성광체 가로', '성광체 가로', 'Nanum Brush Script',
+    'AppleMyungjo', serif;
+  font-size: clamp(2.1rem, 5vw, 2.85rem);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  line-height: 1;
+  letter-spacing: 0.08em;
   color: #ffe2a2;
-  text-shadow:
-    0 0 26px #e28781,
-    0 2px 5px #1d102c;
+  text-shadow: 0 2px 5px #221526b3;
 }
 
 .plaza-header nav {
-  position: absolute;
-  left: 0;
-  top: 0.5rem;
   display: grid;
+  width: fit-content;
   gap: 0.5rem;
   justify-items: start;
   pointer-events: auto;
@@ -199,10 +200,7 @@ textarea:focus-visible {
 
 @media (max-width: 600px) {
   .plaza-header nav {
-    position: static;
     grid-template-columns: repeat(2, max-content);
-    width: fit-content;
-    margin-top: 0.5rem;
   }
 
   .plaza-button {
@@ -313,15 +311,6 @@ textarea:focus-visible {
 .plaza-chevron {
   font-size: 1.2rem;
   line-height: 1;
-}
-
-.plaza-header h1::after {
-  content: '';
-  display: block;
-  width: 7.5rem;
-  height: 2px;
-  margin: 0.15rem auto 0;
-  background: linear-gradient(90deg, transparent, #ffe2a2, transparent);
 }
 
 .plaza-movement {

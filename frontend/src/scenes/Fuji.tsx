@@ -53,7 +53,7 @@ export function Fuji() {
   const geometry = useMemo(createFujiGeometry, [])
 
   return (
-    <group position={[90, -2, -560]} scale={2.3}>
+    <group position={[173, -2, -430]} scale={[1.32, 1.72, 1.32]}>
       <mesh geometry={geometry}>
         <meshBasicMaterial vertexColors fog={false} />
       </mesh>
