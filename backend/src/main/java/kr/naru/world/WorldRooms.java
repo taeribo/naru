@@ -73,7 +73,7 @@ public class WorldRooms {
     public synchronized void move(String connection, double x, double z) {
         Member member = connections.get(connection);
         if (member == null || member.room == null || !Double.isFinite(x) || !Double.isFinite(z)) return;
-        if (x < -54 || x > 54 || z < -38 || z > 72 || Math.hypot(x, z) < 2.7 || insidePond(x, z)) return;
+        if (x < -54 || x > 54 || z < -38 || z > 72 || Math.hypot(x, z) < 2.7) return;
         member.targetX = x;
         member.targetZ = z;
     }
@@ -177,13 +177,6 @@ public class WorldRooms {
         return room;
     }
 
-    // Rounded rectangle in terrain.ts POND, including the stone bank.
-    private static boolean insidePond(double x, double z) {
-        double dx = Math.max(0, Math.abs(x) - 15.8);
-        double dz = Math.max(0, Math.abs(z + 13) - 2.8);
-        return Math.hypot(dx, dz) < 3.85;
-    }
-
     private static boolean advance(Member member) {
         double dx = member.targetX - member.x;
         double dz = member.targetZ - member.z;
@@ -192,7 +185,7 @@ public class WorldRooms {
         double step = Math.min(1, 0.45 / distance);
         double x = member.x + dx * step;
         double z = member.z + dz * step;
-        if (Math.hypot(x, z) < 2.65 || insidePond(x, z)) {
+        if (Math.hypot(x, z) < 2.65) {
             member.targetX = member.x;
             member.targetZ = member.z;
             return false;
