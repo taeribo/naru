@@ -14,7 +14,7 @@ import { FestivalRim } from './FestivalRim'
 import { Forecourt } from './Forecourt'
 import { OnsenApproach } from './OnsenApproach'
 import { StreetStalls } from './StreetStalls'
-import { groundHeight } from './terrain'
+import { CHERRY_POSITION, ENTRY_SPAWN_Z, groundHeight } from './terrain'
 import { preloadSurfaces } from './surfaces'
 import { Zones } from './Zones'
 import type { ZoneId } from './Zones'
@@ -25,11 +25,11 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { PerspectiveCamera } from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 
-const PLAZA_TREE_SCALE = 1.16
+const PLAZA_TREE_SCALE = 1.76
 
-const ENTRY_POSITION: [number, number, number] = [0, 0, 34.5]
-const CAMERA_DISTANCE = 5.0
-const CAMERA_HEIGHT = 2.35
+const ENTRY_POSITION: [number, number, number] = [0, 0, ENTRY_SPAWN_Z]
+const CAMERA_DISTANCE = 8.7
+const CAMERA_HEIGHT = 3.55
 
 const PLAZA_CAMERA = {
   position: [0, CAMERA_HEIGHT, ENTRY_POSITION[2] + CAMERA_DISTANCE] as [
@@ -43,8 +43,8 @@ const PLAZA_CAMERA = {
 }
 const CAMERA_TARGET: [number, number, number] = [
   0,
-  CAMERA_HEIGHT + 0.43,
-  ENTRY_POSITION[2] - 1.8,
+  CAMERA_HEIGHT - 0.28,
+  ENTRY_POSITION[2] - 2.4,
 ]
 
 function VisitorCamera({
@@ -157,16 +157,16 @@ export function PlazaScene({
     >
       <ViewportSettings />
       <Suspense fallback={null}>
-        <fog attach="fog" args={['#b7a3a0', 44, 245]} />
+        <fog attach="fog" args={['#ada3ad', 45, 258]} />
         <hemisphereLight
-          color="#cfddff"
-          groundColor="#9a7963"
-          intensity={0.86}
+          color="#dde4ff"
+          groundColor="#a7896e"
+          intensity={0.76}
         />
         <directionalLight
-          position={[22, 24, -12]}
-          intensity={1.39}
-          color="#ffd4a6"
+          position={[30, 18, -38]}
+          intensity={1.66}
+          color="#ffc28b"
           castShadow
           shadow-mapSize={[1024, 1024]}
           shadow-camera-left={-43}
@@ -176,11 +176,22 @@ export function PlazaScene({
           shadow-normalBias={0.055}
           shadow-bias={-0.0005}
         />
+        <directionalLight
+          position={[-9, 10, 26]}
+          color="#ffd4b5"
+          intensity={0.36}
+        />
         <pointLight
-          position={[1, 3.2, 20]}
-          intensity={26}
-          distance={12}
-          color="#ffd29a"
+          position={[-9, 2.8, 13.2]}
+          color="#ffb46b"
+          intensity={35}
+          distance={13}
+        />
+        <pointLight
+          position={[10.4, 2.5, 10.6]}
+          color="#ffc07c"
+          intensity={36}
+          distance={13}
         />
         <Sky />
         <GardenTerrain />
@@ -196,16 +207,19 @@ export function PlazaScene({
         <Hills />
         <Castle />
         <Japan />
-        <FlowerBed />
+
         <Zones onSelect={onOpenZone} visitor={visitor} />
         <PlazaVisitors
           players={world.players}
           ownId={world.id}
           onMove={world.move}
         />
-        <group scale={PLAZA_TREE_SCALE}>
-          <CherryTree />
-          <CherryPetals />
+        <group position={CHERRY_POSITION}>
+          <FlowerBed />
+          <group scale={PLAZA_TREE_SCALE}>
+            <CherryTree />
+            <CherryPetals />
+          </group>
         </group>
       </Suspense>
       <VisitorCamera visitor={visitor} onBearing={onCameraBearing} />

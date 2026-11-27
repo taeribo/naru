@@ -1,28 +1,20 @@
 import { useGLTF } from '@react-three/drei'
 import { useEffect, useMemo } from 'react'
 import {
-  CatmullRomCurve3,
   CircleGeometry,
   Color,
   ConeGeometry,
-  DoubleSide,
   Mesh,
   MeshStandardMaterial,
-  Shape,
-  Vector3,
 } from 'three'
 import type { BufferGeometry } from 'three'
 import { createSnowCap, snowMaterial } from './snow'
 import { SnowCap } from './SnowCap'
 import { projectSurfaceUvs, useSurface } from './surfaces'
-import { LANDING_HEIGHT, STAIRS, TORII_Z } from './terrain'
+import { Torii } from './Torii'
+import { STAIRS, TORII_Z } from './terrain'
 
-type Model =
-  | 'torii'
-  | 'shrine-hall'
-  | 'tea-house'
-  | 'stone-lantern'
-  | 'mossy-boulders'
+type Model = 'shrine-hall' | 'tea-house' | 'stone-lantern' | 'mossy-boulders'
 type Position = [number, number, number]
 
 export function Architecture({
@@ -73,12 +65,12 @@ export function Architecture({
           )
           material.roughness = 0.94
         }
-        if (original.name === 'vermilion') material.color.set('#aa422c')
-        if (original.name === 'plaster') material.color.set('#b5a58c')
+        if (original.name === 'vermilion') material.color.set('#b04c36')
+        if (original.name === 'plaster') material.color.set('#c7b496')
         if (original.name === 'paper') {
           material.color.set('#e1bc88')
           material.emissive.set('#ff9d40')
-          material.emissiveIntensity = model === 'stone-lantern' ? 1.15 : 0.47
+          material.emissiveIntensity = model === 'stone-lantern' ? 1.06 : 0.76
         }
         materials.set(original, material)
         return material
@@ -95,12 +87,11 @@ export function Architecture({
       const original = Array.isArray(child.material)
         ? child.material[0]
         : child.material
-      const top = model === 'torii' && original.name === 'timber'
       const roofOrStone =
         original.name === 'tile' ||
         (model === 'mossy-boulders' && original.name === 'concrete') ||
         (model === 'stone-lantern' && original.name === 'stone')
-      if (top || roofOrStone) {
+      if (roofOrStone) {
         child.geometry.computeBoundingBox()
         const bounds = child.geometry.boundingBox!
         const range = bounds.max.y - bounds.min.y
@@ -109,7 +100,7 @@ export function Architecture({
           model === 'mossy-boulders' ? 0.12 : 0.1,
           roofOrStone && original.name === 'tile'
             ? -Infinity
-            : bounds.min.y + range * (top ? 0.61 : 0.42),
+            : bounds.min.y + range * 0.42,
         )
         if (capGeometry.attributes.position.count) {
           const cap = new Mesh(capGeometry, snowMaterial)
@@ -142,60 +133,6 @@ export function Architecture({
       scale={scale}
       rotation-y={yaw}
     />
-  )
-}
-
-const GATE_ROPE = new CatmullRomCurve3([
-  new Vector3(-4.08, 6.35, 0.6),
-  new Vector3(-2.25, 5.45, 0.7),
-  new Vector3(0, 5.13, 0.77),
-  new Vector3(2.25, 5.43, 0.7),
-  new Vector3(4.08, 6.35, 0.6),
-])
-
-const SHIDE = new Shape()
-SHIDE.moveTo(-0.11, 0)
-SHIDE.lineTo(0.15, 0)
-SHIDE.lineTo(0.01, -0.2)
-SHIDE.lineTo(0.17, -0.29)
-SHIDE.lineTo(-0.11, -0.66)
-SHIDE.lineTo(-0.21, -0.5)
-SHIDE.lineTo(-0.03, -0.32)
-SHIDE.lineTo(-0.18, -0.22)
-SHIDE.closePath()
-
-function GateRope() {
-  const timber = useSurface('wood')
-  return (
-    <group position={[0, LANDING_HEIGHT, TORII_Z]}>
-      <mesh position-y={6.68} castShadow>
-        <boxGeometry args={[10.6, 0.47, 0.5]} />
-        <meshStandardMaterial
-          normalMap={timber.normalMap}
-          roughnessMap={timber.roughnessMap}
-          color="#9e3f30"
-          roughness={0.92}
-        />
-      </mesh>
-      <mesh castShadow>
-        <tubeGeometry args={[GATE_ROPE, 44, 0.115, 7, false]} />
-        <meshStandardMaterial color="#c6a16c" roughness={0.94} />
-      </mesh>
-      {[0.24, 0.37, 0.5, 0.63, 0.76].map((offset, index) => (
-        <mesh
-          key={offset}
-          position={GATE_ROPE.getPointAt(offset)}
-          rotation-y={(index - 2) * 0.11}
-        >
-          <shapeGeometry args={[SHIDE]} />
-          <meshStandardMaterial
-            color="#fff2d8"
-            side={DoubleSide}
-            roughness={0.96}
-          />
-        </mesh>
-      ))}
-    </group>
   )
 }
 
@@ -328,9 +265,9 @@ function PaperLantern({ position }: { position: Position }) {
       <mesh scale={[0.76, 1, 0.76]} castShadow>
         <sphereGeometry args={[0.56, 14, 10]} />
         <meshStandardMaterial
-          color="#ffc675"
+          color="#ffd299"
           emissive="#ff922f"
-          emissiveIntensity={0.95}
+          emissiveIntensity={0.83}
           roughness={0.89}
         />
       </mesh>
@@ -353,12 +290,7 @@ function PaperLantern({ position }: { position: Position }) {
 export function EntranceArchitecture() {
   return (
     <group>
-      <Architecture
-        model="torii"
-        position={[0, LANDING_HEIGHT, TORII_Z]}
-        scale={2.72}
-      />
-      <GateRope />
+      <Torii />
       <WinterBanks />
       <PaperLantern position={[-16.4, 3.2, TORII_Z + 1.9]} />
       <PaperLantern position={[-18.45, 3.2, TORII_Z + 1.3]} />
@@ -368,6 +300,8 @@ export function EntranceArchitecture() {
       <Kadomatsu x={4.65} z={STAIRS.bottomZ + 0.25} />
       <FestivalLantern position={[-6.4, 0, 34.4]} />
       <FestivalLantern position={[6.6, 0, 33.8]} />
+      <FestivalLantern position={[-5.55, 0, STAIRS.bottomZ - 3.25]} />
+      <FestivalLantern position={[5.45, 0, STAIRS.bottomZ - 3.8]} />
       <FestivalLantern position={[-11.2, 0, 17.2]} />
       <FestivalLantern position={[12.4, 0, 16.1]} />
       <FestivalLantern position={[-8.4, 0, 3.7]} />
@@ -375,14 +309,14 @@ export function EntranceArchitecture() {
       <pointLight
         position={[-6.4, 2.25, 34.4]}
         color="#ffbc68"
-        intensity={14}
-        distance={6}
+        intensity={20}
+        distance={8}
       />
       <pointLight
         position={[6.6, 2.25, 33.8]}
         color="#ffb56c"
-        intensity={13}
-        distance={6}
+        intensity={23}
+        distance={8}
       />
       <Architecture
         model="tea-house"
@@ -417,16 +351,16 @@ export function EntranceArchitecture() {
         scale={0.72}
       />
       <pointLight
-        position={[-5.3, 1.5, STAIRS.bottomZ + 0.9]}
+        position={[-4.9, 2.0, STAIRS.bottomZ - 1.0]}
         color="#ffbb6c"
-        intensity={12}
-        distance={6}
+        intensity={36}
+        distance={10}
       />
       <pointLight
-        position={[5.2, 1.45, STAIRS.bottomZ - 0.4]}
+        position={[4.95, 2.2, STAIRS.bottomZ - 3.2]}
         color="#ffbb6c"
-        intensity={11}
-        distance={6}
+        intensity={39}
+        distance={10}
       />
     </group>
   )

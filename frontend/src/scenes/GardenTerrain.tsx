@@ -13,7 +13,7 @@ import type { InstancedMesh } from 'three'
 import { GardenPines } from './GardenPines'
 import type { PinePlacement } from './GardenPines'
 import { RIM_SEPARATORS } from './festivalLayout'
-import { WORLD_BOUNDS, ZONES } from './terrain'
+import { FRONT_WALL_Z, WORLD_BOUNDS, ZONES } from './terrain'
 import { createShrubGeometry } from './shrubGeometry'
 import { getGravelTexture } from './textures'
 
@@ -72,20 +72,10 @@ const GARDEN_TREE_GROUPS: [number, number, number][] = [
   [ZONES.wish[0] - 7, ZONES.wish[1] - 2.5, 0.86],
   [ZONES.bell[0] + 6, ZONES.bell[1] + 1.5, 0.79],
   [ZONES.rest[0] - 14, ZONES.rest[1] - 14, 1.0],
-  // 스폰 뒤쪽 돌담 너머의 숲
-  [-30, 52, 0.85],
-  [-11, 53, 0.8],
-  [12, 53, 0.85],
-  [31, 52, 0.9],
 ]
 
 // Keep the new groves on the outer edges, clear of the courtyard and entrance.
 const BACKGROUND_GROVES: [number, number, number][] = [
-  [-40, 60, 1.3],
-  [-19, 64, 1.4],
-  [0, 66, 1.5],
-  [19, 64, 1.35],
-  [40, 60, 1.3],
   [-55.4, 42.1, 1.17],
   [-62.8, 35.0, 1.42],
   [-56.2, 25.5, 1.15],
@@ -136,7 +126,7 @@ const TREES = [
         0.82 + (index % 6) * 0.15,
       ]),
     )
-    .filter(([x]) => Math.abs(x) >= 57),
+    .filter(([x, z]) => Math.abs(x) >= 57 && z < FRONT_WALL_Z),
 ]
 
 const UNDERGROWTH = GARDEN_TREE_GROUPS.flatMap(([x, z, s], index) =>

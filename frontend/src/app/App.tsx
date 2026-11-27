@@ -90,8 +90,8 @@ export function App() {
         }}
       />
       <header className="plaza-header">
-        <h1>나루</h1>
-        <nav aria-label="나루 체험">
+        <h1>새 해</h1>
+        <nav aria-label="새 해 체험">
           {Object.entries(ZONE_LABELS).map(([id, label]) => (
             <button
               key={id}

@@ -3,9 +3,8 @@ import { BoxGeometry } from 'three'
 import { Architecture } from './EntranceArchitecture'
 import { SnowCap } from './SnowCap'
 import { projectSurfaceUvs, useSurface } from './surfaces'
-import { WORLD_BOUNDS } from './terrain'
+import { FRONT_WALL_Z } from './terrain'
 
-const WALL_Z = WORLD_BOUNDS.maxZ + 1.6
 const GATE_HALF = 3.4
 
 /** 스폰 뒤쪽의 낮은 돌담: 가운데는 열어 두고 석등 한 쌍으로 마당의 끝을 표시한다. */
@@ -29,7 +28,7 @@ export function Forecourt() {
         <mesh
           key={x}
           geometry={geometry}
-          position={[x, 0.5, WALL_Z]}
+          position={[x, 0.5, FRONT_WALL_Z]}
           castShadow
           receiveShadow
         >
@@ -41,7 +40,7 @@ export function Forecourt() {
         <Architecture
           key={side}
           model="stone-lantern"
-          position={[side * GATE_HALF, 0, WALL_Z]}
+          position={[side * GATE_HALF, 0, FRONT_WALL_Z]}
           scale={1.05}
           yaw={side > 0 ? 0.4 : -0.4}
         />

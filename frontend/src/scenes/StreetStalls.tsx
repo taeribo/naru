@@ -520,7 +520,7 @@ export function Shop({
           <meshStandardMaterial
             color="#ffd9a0"
             emissive="#ff9a44"
-            emissiveIntensity={0.85}
+            emissiveIntensity={0.98}
           />
         </mesh>
       )}
@@ -592,17 +592,18 @@ export function Shop({
               side={DoubleSide}
               roughness={1}
               emissiveMap={stripes}
-              emissive="#ffffff"
-              emissiveIntensity={0.12}
+              color="#e9d5b6"
+              emissive="#ffc68e"
+              emissiveIntensity={0.045}
             />
           </mesh>
         ))}
       {glow && (
         <pointLight
-          position={[0, 2, DEPTH / 2 + 0.6]}
+          position={[0, 2.25, DEPTH / 2 + 0.72]}
           color="#ffb060"
-          intensity={11}
-          distance={7}
+          intensity={19}
+          distance={8}
         />
       )}
     </group>
