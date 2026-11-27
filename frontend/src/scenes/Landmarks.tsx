@@ -14,7 +14,15 @@ import {
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { CASTLE_POSITION } from './Castle'
-import { AVENUE, CASTLE_SITE, WORLD_BOUNDS, elevation, inRect } from './terrain'
+import {
+  AVENUE,
+  CASTLE_SITE,
+  ONSEN_ACCESS,
+  ONSEN_SITE,
+  WORLD_BOUNDS,
+  elevation,
+  inRect,
+} from './terrain'
 import { Plaza } from './StoneCourtyard'
 import { Stairs } from './Stairs'
 import { roofGeometry } from './shapes'
@@ -206,7 +214,8 @@ function buildVillage() {
   for (let index = 0; index < 60; index += 1) {
     const side = index % 2 ? 1 : -1
     const z = -26 - random() * 34
-    const x = side * (17 + random() * 34)
+    // 성 부지와 온천 구역 바깥, 양옆 멀리까지 퍼뜨려 마을 배경을 남긴다.
+    const x = side * (17 + random() * 78)
     const tiers = random() < 0.7 ? 1 : random() < 0.75 ? 2 : 3
     const width = tiers === 1 ? 5 + random() * 2.5 : 3.4 + random() * 1.6
     const depth = 3 + random() * 1.2
@@ -218,6 +227,8 @@ function buildVillage() {
     // 성 부지와 참배길은 비워 둔다.
     if (
       inRect(x, z, CASTLE_SITE, 6) ||
+      inRect(x, z, ONSEN_SITE, 6) ||
+      ONSEN_ACCESS.some((area) => inRect(x, z, area, 6)) ||
       AVENUE.some((area) => inRect(x, z, area, 6))
     )
       continue
@@ -292,7 +303,8 @@ function buildVillage() {
       )
     }
   }
-  const merge = (list: BufferGeometry[]) => mergeGeometries(list)
+  const merge = (list: BufferGeometry[]) =>
+    list.length > 0 ? mergeGeometries(list) : new BufferGeometry()
   return {
     walls: merge(walls),
     roofs: merge(roofs),

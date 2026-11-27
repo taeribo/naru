@@ -16,6 +16,8 @@ import { RIM_SEPARATORS } from './festivalLayout'
 import {
   AVENUE,
   CASTLE_SITE,
+  ONSEN_ACCESS,
+  ONSEN_SITE,
   FRONT_WALL_Z,
   ZONES,
   elevation,
@@ -68,7 +70,6 @@ const GARDEN_TREE_GROUPS: [number, number, number][] = [
   [ZONES.fortune[0] - 7, ZONES.fortune[1] + 3, 0.94],
   [ZONES.wish[0] - 7, ZONES.wish[1] - 2.5, 0.86],
   [ZONES.bell[0] + 6, ZONES.bell[1] + 1.5, 0.79],
-  [ZONES.rest[0] - 14, ZONES.rest[1] - 14, 1.0],
 ]
 
 // Keep the new groves on the outer edges, clear of the courtyard and entrance.
@@ -128,6 +129,8 @@ const TREES = [
 ].filter(
   ([x, z]) =>
     !inRect(x, z, CASTLE_SITE, 2) &&
+    !inRect(x, z, ONSEN_SITE, 2) &&
+    !ONSEN_ACCESS.some((area) => inRect(x, z, area, 3)) &&
     !AVENUE.some((area) => inRect(x, z, area, 3)),
 )
 

@@ -14,7 +14,7 @@ export const COURTYARD = {
 }
 
 /** 확장된 맵 전체. 바깥쪽 숲과 언덕까지 포함하며 걸을 수 있는 곳은 WALKABLE_AREAS뿐이다. */
-export const MAP_BOUNDS = { minX: -70, maxX: 70, minZ: -72, maxZ: 46 }
+export const MAP_BOUNDS = { minX: -70, maxX: 76, minZ: -76, maxZ: 46 }
 
 /** [minX, maxX, minZ, maxZ] */
 export type Rect = readonly [number, number, number, number]
@@ -25,7 +25,20 @@ export const AVENUE: Rect[] = [
   [-30, 4, -58, -50],
 ]
 
-/** 지형이 평평하게 유지되는 구역: 광장, 참배길, 성 부지. */
+/**
+ * 온천 구역: 북동쪽 담장 안. 담은 x 38에 서고(두께 1), 서쪽 담의 문(z -54~-46)으로만 드나든다.
+ * 광장 북쪽 끝에서 올라오는 접근로가 문 앞에서 담장 두께만큼 끊겨 있어 문 밖으로는 담을 통과할 수 없다.
+ */
+export const ONSEN_SITE: Rect = [38, 76, -73, -41]
+export const ONSEN_WALL_X = 38
+export const ONSEN_GATE_Z: readonly [number, number] = [-54, -46]
+export const ONSEN_ACCESS: Rect[] = [
+  [30, 37.5, -54, -38],
+  [37.5, 38.5, ONSEN_GATE_Z[0], ONSEN_GATE_Z[1]],
+]
+const ONSEN_YARD: Rect = [38.5, 76, -58, -41]
+
+/** 지형이 평평하게 유지되는 구역: 광장, 참배길, 성 부지, 온천 구역. */
 export const CASTLE_SITE: Rect = [-70, -30, -72, -38]
 const FLAT_AREAS: Rect[] = [
   [
@@ -36,6 +49,8 @@ const FLAT_AREAS: Rect[] = [
   ],
   ...AVENUE,
   CASTLE_SITE,
+  ONSEN_SITE,
+  [30, 38, -54, -38],
 ]
 
 /**
@@ -50,6 +65,8 @@ export const WALKABLE_AREAS: Rect[] = [
     WORLD_BOUNDS.maxZ,
   ],
   ...AVENUE,
+  ...ONSEN_ACCESS,
+  ONSEN_YARD,
 ]
 
 export function inRect(x: number, z: number, [x0, x1, z0, z1]: Rect, margin = 0) {
@@ -102,7 +119,7 @@ export const ZONES = {
   fortune: [-24, 5],
   wish: [-31, -17],
   bell: [24, 6],
-  rest: [34, -14],
+  rest: [56, -50],
 } as const
 
 /** (x, z) 지점에서 걷는 사람 발밑의 높이: 계단 위면 계단 높이, 아니면 바닥. */

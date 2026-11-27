@@ -25,6 +25,9 @@ public class WorldRooms {
             {-54, 54, -38, FRONT_LIMIT_Z},
             {-4, 4, -54, -38},
             {-30, 4, -58, -50},
+            {30, 37.5, -54, -38},
+            {37.5, 38.5, -54, -46},
+            {38.5, 76, -58, -41},
     };
 
     private final Map<Integer, Room> rooms = new LinkedHashMap<>();
@@ -214,6 +217,12 @@ public class WorldRooms {
             } else if (walkable(member.x, z)) {
                 x = member.x;
             } else {
+                member.targetX = member.x;
+                member.targetZ = member.z;
+                return false;
+            }
+            if (Math.abs(x - member.x) < 1e-9 && Math.abs(z - member.z) < 1e-9) {
+                // Sliding along the blocked axis does not move: stop instead of re-sending the same position.
                 member.targetX = member.x;
                 member.targetZ = member.z;
                 return false;

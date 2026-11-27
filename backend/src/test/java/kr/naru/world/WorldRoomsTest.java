@@ -168,7 +168,39 @@ class WorldRoomsTest {
         assertThat(world.tick(now + tick++ * 100L)).isEmpty();
         world.move("visitor", -45, -54);
         assertThat(world.tick(now + tick++ * 100L)).isEmpty();
-        world.move("visitor", 40, -45);
+        world.move("visitor", 20, -60);
+        assertThat(world.tick(now + tick * 100L)).isEmpty();
+    }
+
+    @Test
+    void entersTheWalledOnsenOnlyThroughItsGate() {
+        world.join("visitor", null);
+        long now = System.currentTimeMillis();
+        var visitor = joined(world.tick(now), "visitor");
+        long tick = 1;
+        WorldRooms.Player last = null;
+
+        for (double[] stop : new double[][] {{34, -38}, {34, -50}, {56, -50}}) {
+            world.move("visitor", stop[0], stop[1]);
+            for (int step = 0; step < 500; step++, tick++) {
+                var update = world.tick(now + tick * 100L);
+                if (!update.isEmpty()) last = player(update, "visitor", visitor.id());
+            }
+            assertThat(last).isEqualTo(new WorldRooms.Player(visitor.id(), stop[0], stop[1]));
+        }
+
+        // The wall blocks the way back at any height but the gate, and the yard has no other exits.
+        world.move("visitor", 56, -44);
+        for (int step = 0; step < 100; step++, tick++) world.tick(now + tick * 100L);
+        world.move("visitor", 34, -44);
+        for (int step = 0; step < 200; step++, tick++) {
+            var update = world.tick(now + tick * 100L);
+            if (!update.isEmpty()) last = player(update, "visitor", visitor.id());
+        }
+        assertThat(last.x()).isGreaterThanOrEqualTo(38.5);
+        world.move("visitor", 56, -59);
+        assertThat(world.tick(now + tick++ * 100L)).isEmpty();
+        world.move("visitor", 77, -50);
         assertThat(world.tick(now + tick * 100L)).isEmpty();
     }
 
