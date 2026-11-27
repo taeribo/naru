@@ -13,6 +13,85 @@ export const COURTYARD = {
   centerZ: (WORLD_BOUNDS.minZ + WORLD_BOUNDS.maxZ) / 2,
 }
 
+/** 확장된 맵 전체. 바깥쪽 숲과 언덕까지 포함하며 걸을 수 있는 곳은 WALKABLE_AREAS뿐이다. */
+export const MAP_BOUNDS = { minX: -70, maxX: 76, minZ: -76, maxZ: 46 }
+
+/** [minX, maxX, minZ, maxZ] */
+export type Rect = readonly [number, number, number, number]
+
+/** 광장에서 북쪽으로 올라 서쪽 성으로 가는 참배길(폭 8). */
+export const AVENUE: Rect[] = [
+  [-4, 4, -54, -38],
+  [-30, 4, -58, -50],
+]
+
+/**
+ * 온천 구역: 북동쪽 담장 안. 담은 x 38에 서고(두께 1), 서쪽 담의 문(z -54~-46)으로만 드나든다.
+ * 광장 북쪽 끝에서 올라오는 접근로가 문 앞에서 담장 두께만큼 끊겨 있어 문 밖으로는 담을 통과할 수 없다.
+ */
+export const ONSEN_SITE: Rect = [38, 76, -73, -41]
+export const ONSEN_WALL_X = 38
+export const ONSEN_GATE_Z: readonly [number, number] = [-54, -46]
+export const ONSEN_ACCESS: Rect[] = [
+  [30, 37.5, -54, -38],
+  [37.5, 38.5, ONSEN_GATE_Z[0], ONSEN_GATE_Z[1]],
+]
+const ONSEN_YARD: Rect = [38.5, 76, -58, -41]
+
+/** 지형이 평평하게 유지되는 구역: 광장, 참배길, 성 부지, 온천 구역. */
+export const CASTLE_SITE: Rect = [-70, -30, -72, -38]
+const FLAT_AREAS: Rect[] = [
+  [
+    WORLD_BOUNDS.minX,
+    WORLD_BOUNDS.maxX,
+    WORLD_BOUNDS.minZ,
+    WORLD_BOUNDS.maxZ,
+  ],
+  ...AVENUE,
+  CASTLE_SITE,
+  ONSEN_SITE,
+  [30, 38, -54, -38],
+]
+
+/**
+ * 방문객이 걸을 수 있는 구역. 서버(WorldRooms.java)의 AREAS와 같아야 한다.
+ * 나머지 숲과 언덕은 접근할 수 없다.
+ */
+export const WALKABLE_AREAS: Rect[] = [
+  [
+    WORLD_BOUNDS.minX,
+    WORLD_BOUNDS.maxX,
+    WORLD_BOUNDS.minZ,
+    WORLD_BOUNDS.maxZ,
+  ],
+  ...AVENUE,
+  ...ONSEN_ACCESS,
+  ONSEN_YARD,
+]
+
+export function inRect(x: number, z: number, [x0, x1, z0, z1]: Rect, margin = 0) {
+  return (
+    x >= x0 - margin && x <= x1 + margin && z >= z0 - margin && z <= z1 + margin
+  )
+}
+
+export function isWalkable(x: number, z: number) {
+  return WALKABLE_AREAS.some((area) => inRect(x, z, area))
+}
+
+/** 목표가 막혀 있으면 한 축씩 미끄러지고, 그래도 안 되면 제자리에 둔다. */
+export function stepToward(
+  fromX: number,
+  fromZ: number,
+  toX: number,
+  toZ: number,
+): [number, number] {
+  if (isWalkable(toX, toZ)) return [toX, toZ]
+  if (isWalkable(toX, fromZ)) return [toX, fromZ]
+  if (isWalkable(fromX, toZ)) return [fromX, toZ]
+  return [fromX, fromZ]
+}
+
 /**
  * 입장 계단: 남쪽(z 큼)에서 북쪽으로 오르고, 위 단(착지대)에 붉은 도리이가 서며,
  * 도리이를 지나면 반대편 계단으로 내려와 광장에 닿는다.
@@ -40,7 +119,7 @@ export const ZONES = {
   fortune: [-24, 5],
   wish: [-31, -17],
   bell: [24, 6],
-  rest: [34, -14],
+  rest: [56, -50],
 } as const
 
 /** (x, z) 지점에서 걷는 사람 발밑의 높이: 계단 위면 계단 높이, 아니면 바닥. */
@@ -57,4 +136,16 @@ export function groundHeight(x: number, z: number) {
     return Math.max(0, rise * (upSteps - index - 1))
   }
   return 0
+}
+
+// 평평한 구역(광장, 참배길, 성 부지) 바깥으로 갈수록 언덕이 솟는다.
+export function elevation(x: number, z: number) {
+  const beyond = Math.min(
+    ...FLAT_AREAS.map(([x0, x1, z0, z1]) =>
+      Math.max(x0 - x, x - x1, z0 - z, z - z1, 0),
+    ),
+  )
+  const rise = Math.min(beyond / 18, 1)
+  const wave = Math.sin(x * 0.064 + Math.cos(z * 0.047) * 1.7)
+  return -0.045 + rise * rise * (1.8 + wave * 0.77 + Math.sin(z * 0.08) * 0.5)
 }

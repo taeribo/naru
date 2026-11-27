@@ -49,9 +49,11 @@ const { minZ, maxZ } = WORLD_BOUNDS
 const { width, depth, centerX, centerZ } = COURTYARD
 const AXIS_WIDTH = 5.6
 const BRANCH_WIDTH = 3.25
+// 온천은 광장 밖 담장 구역에 있어 광장 길과 마당 석판에서 제외한다.
+const PLAZA_ZONES = [ZONES.fortune, ZONES.wish, ZONES.bell]
 const PATHS: [number, number, number, number][] = [
   [0, (minZ + 1 + STAIRS_END_Z) / 2, AXIS_WIDTH, STAIRS_END_Z - minZ - 1],
-  ...Object.values(ZONES).map(([x, z]): [number, number, number, number] => [
+  ...PLAZA_ZONES.map(([x, z]): [number, number, number, number] => [
     (x + (Math.sign(x) * AXIS_WIDTH) / 2) / 2,
     z,
     Math.abs(x) - AXIS_WIDTH / 2,
@@ -155,7 +157,7 @@ export function Plaza() {
           color="#d1cbd3"
         />
       </mesh>
-      {Object.values(ZONES).map(([x, z]) => (
+      {PLAZA_ZONES.map(([x, z]) => (
         <mesh
           key={`${x}:${z}`}
           geometry={courts[1]}

@@ -14,7 +14,15 @@ import {
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { CASTLE_POSITION } from './Castle'
-import { WORLD_BOUNDS } from './terrain'
+import {
+  AVENUE,
+  CASTLE_SITE,
+  ONSEN_ACCESS,
+  ONSEN_SITE,
+  WORLD_BOUNDS,
+  elevation,
+  inRect,
+} from './terrain'
 import { Plaza } from './StoneCourtyard'
 import { Stairs } from './Stairs'
 import { roofGeometry } from './shapes'
@@ -206,8 +214,8 @@ function buildVillage() {
   for (let index = 0; index < 60; index += 1) {
     const side = index % 2 ? 1 : -1
     const z = -26 - random() * 34
-    const x = side * (17 + random() * 34)
-    const ground = 0
+    // 성 부지와 온천 구역 바깥, 양옆 멀리까지 퍼뜨려 마을 배경을 남긴다.
+    const x = side * (17 + random() * 78)
     const tiers = random() < 0.7 ? 1 : random() < 0.75 ? 2 : 3
     const width = tiers === 1 ? 5 + random() * 2.5 : 3.4 + random() * 1.6
     const depth = 3 + random() * 1.2
@@ -216,14 +224,35 @@ function buildVillage() {
       continue
     // 광장 뒤쪽 멀리에 마을을 둔다.
     if (Math.abs(x) < 27 || z > WORLD_BOUNDS.minZ - 12) continue
+    // 성 부지와 참배길은 비워 둔다.
+    if (
+      inRect(x, z, CASTLE_SITE, 6) ||
+      inRect(x, z, ONSEN_SITE, 6) ||
+      ONSEN_ACCESS.some((area) => inRect(x, z, area, 6)) ||
+      AVENUE.some((area) => inRect(x, z, area, 6))
+    )
+      continue
+    // 언덕 지형 위에 앉힌다: 발치 평균 높이보다 살짝 위에 맞추고 기단을 낮은 모서리까지 늘려 틈을 메운다.
+    const halfW = width / 2 + 0.45
+    const halfD = depth / 2 + 0.45
+    const heights = [
+      elevation(x, z),
+      elevation(x - halfW, z - halfD),
+      elevation(x + halfW, z - halfD),
+      elevation(x - halfW, z + halfD),
+      elevation(x + halfW, z + halfD),
+    ]
+    const mean = heights.reduce((sum, h) => sum + h, 0) / heights.length
+    const ground = mean + 0.3
+    const sink = Math.max(0, ground - Math.min(...heights)) + 0.15
     const building = new Matrix4().makeRotationY(yaw).setPosition(x, ground, z)
 
     place(
       stone,
-      new BoxGeometry(width + 0.9, 0.4, depth + 0.9),
+      new BoxGeometry(width + 0.9, 0.4 + sink, depth + 0.9),
       building,
       0,
-      0.2,
+      0.2 - sink / 2,
       0,
     )
     for (let tier = 0; tier < tiers; tier += 1) {
@@ -274,7 +303,8 @@ function buildVillage() {
       )
     }
   }
-  const merge = (list: BufferGeometry[]) => mergeGeometries(list)
+  const merge = (list: BufferGeometry[]) =>
+    list.length > 0 ? mergeGeometries(list) : new BufferGeometry()
   return {
     walls: merge(walls),
     roofs: merge(roofs),

@@ -20,6 +20,15 @@ public class WorldRooms {
     // Match the front movement limit and entrance spawn in terrain.ts.
     private static final double FRONT_LIMIT_Z = 46;
     private static final double ENTRY_SPAWN_Z = FRONT_LIMIT_Z - 2.5;
+    // Walkable areas {minX, maxX, minZ, maxZ}; keep in sync with WALKABLE_AREAS in terrain.ts.
+    private static final double[][] AREAS = {
+            {-54, 54, -38, FRONT_LIMIT_Z},
+            {-4, 4, -54, -38},
+            {-30, 4, -58, -50},
+            {30, 37.5, -54, -38},
+            {37.5, 38.5, -54, -46},
+            {38.5, 76, -58, -41},
+    };
 
     private final Map<Integer, Room> rooms = new LinkedHashMap<>();
     private final Map<String, Member> members = new LinkedHashMap<>();
@@ -77,7 +86,7 @@ public class WorldRooms {
     public synchronized void move(String connection, double x, double z) {
         Member member = connections.get(connection);
         if (member == null || member.room == null || !Double.isFinite(x) || !Double.isFinite(z)) return;
-        if (x < -54 || x > 54 || z < -38 || z > FRONT_LIMIT_Z || insideCherryBed(x, z)) return;
+        if (!walkable(x, z) || insideCherryBed(x, z)) return;
         member.targetX = x;
         member.targetZ = z;
     }
@@ -186,6 +195,13 @@ public class WorldRooms {
         return Math.hypot(x + 7.8, z - 2.5) < 5.25;
     }
 
+    private static boolean walkable(double x, double z) {
+        for (double[] area : AREAS) {
+            if (x >= area[0] && x <= area[1] && z >= area[2] && z <= area[3]) return true;
+        }
+        return false;
+    }
+
     private static boolean advance(Member member) {
         double dx = member.targetX - member.x;
         double dz = member.targetZ - member.z;
@@ -194,6 +210,24 @@ public class WorldRooms {
         double step = Math.min(1, 0.45 / distance);
         double x = member.x + dx * step;
         double z = member.z + dz * step;
+        if (!walkable(x, z)) {
+            // Slide along one axis before giving up so corners of the avenue are passable.
+            if (walkable(x, member.z)) {
+                z = member.z;
+            } else if (walkable(member.x, z)) {
+                x = member.x;
+            } else {
+                member.targetX = member.x;
+                member.targetZ = member.z;
+                return false;
+            }
+            if (Math.abs(x - member.x) < 1e-9 && Math.abs(z - member.z) < 1e-9) {
+                // Sliding along the blocked axis does not move: stop instead of re-sending the same position.
+                member.targetX = member.x;
+                member.targetZ = member.z;
+                return false;
+            }
+        }
         if (insideCherryBed(x, z)) {
             member.targetX = member.x;
             member.targetZ = member.z;

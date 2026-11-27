@@ -10,13 +10,13 @@ import {
 } from 'three'
 import type { InstancedMesh } from 'three'
 
-// 신사 뒤로 겹겹이 이어지는 숲 언덕.
+// 신사 뒤로 겹겹이 이어지는 숲 언덕. 첫 층은 성 부지(z -72)보다 북쪽에서 시작한다.
 const LAYERS = [
-  { z: -78, depth: 56, height: 13, seed: 1 },
-  { z: -125, depth: 70, height: 20, seed: 2 },
-  { z: -185, depth: 90, height: 20, seed: 3 },
-  { z: -265, depth: 110, height: 29, seed: 4 },
-  { z: -370, depth: 140, height: 42, seed: 5 },
+  { z: -102, depth: 56, height: 13, seed: 1 },
+  { z: -149, depth: 70, height: 20, seed: 2 },
+  { z: -209, depth: 90, height: 20, seed: 3 },
+  { z: -289, depth: 110, height: 29, seed: 4 },
+  { z: -394, depth: 140, height: 42, seed: 5 },
 ]
 const WIDTH = 900
 // 밤 숲 색: 짙은 초록 계열(계절감이 섞이지 않게 단풍색은 쓰지 않는다).

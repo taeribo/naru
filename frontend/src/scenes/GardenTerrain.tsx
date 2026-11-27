@@ -13,19 +13,18 @@ import type { InstancedMesh } from 'three'
 import { GardenPines } from './GardenPines'
 import type { PinePlacement } from './GardenPines'
 import { RIM_SEPARATORS } from './festivalLayout'
-import { FRONT_WALL_Z, WORLD_BOUNDS, ZONES } from './terrain'
+import {
+  AVENUE,
+  CASTLE_SITE,
+  ONSEN_ACCESS,
+  ONSEN_SITE,
+  FRONT_WALL_Z,
+  ZONES,
+  elevation,
+  inRect,
+} from './terrain'
 import { createShrubGeometry } from './shrubGeometry'
 import { getGravelTexture } from './textures'
-
-const { minX, maxX, minZ, maxZ } = WORLD_BOUNDS
-
-// The walkable floor stays level. Hills rise only outside the play area.
-function elevation(x: number, z: number) {
-  const beyond = Math.max(minX - x, x - maxX, minZ - z, z - maxZ, 0)
-  const rise = Math.min(beyond / 18, 1)
-  const wave = Math.sin(x * 0.064 + Math.cos(z * 0.047) * 1.7)
-  return -0.045 + rise * rise * (1.8 + wave * 0.77 + Math.sin(z * 0.08) * 0.5)
-}
 
 function terrainGeometry() {
   const geometry = new PlaneGeometry(292, 252, 112, 102)
@@ -71,7 +70,6 @@ const GARDEN_TREE_GROUPS: [number, number, number][] = [
   [ZONES.fortune[0] - 7, ZONES.fortune[1] + 3, 0.94],
   [ZONES.wish[0] - 7, ZONES.wish[1] - 2.5, 0.86],
   [ZONES.bell[0] + 6, ZONES.bell[1] + 1.5, 0.79],
-  [ZONES.rest[0] - 14, ZONES.rest[1] - 14, 1.0],
 ]
 
 // Keep the new groves on the outer edges, clear of the courtyard and entrance.
@@ -127,7 +125,14 @@ const TREES = [
       ]),
     )
     .filter(([x, z]) => Math.abs(x) >= 57 && z < FRONT_WALL_Z),
-]
+  // 성 부지와 참배길에는 나무를 심지 않는다.
+].filter(
+  ([x, z]) =>
+    !inRect(x, z, CASTLE_SITE, 2) &&
+    !inRect(x, z, ONSEN_SITE, 2) &&
+    !ONSEN_ACCESS.some((area) => inRect(x, z, area, 3)) &&
+    !AVENUE.some((area) => inRect(x, z, area, 3)),
+)
 
 const UNDERGROWTH = GARDEN_TREE_GROUPS.flatMap(([x, z, s], index) =>
   Array.from({ length: 5 }, (_, group) => {

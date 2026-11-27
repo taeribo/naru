@@ -15,10 +15,13 @@ import { SnowCap } from './SnowCap'
 import { SteamPlume } from './SteamPlume'
 import { roofGeometry } from './shapes'
 import { projectSurfaceUvs, useSurface } from './surfaces'
-import { ZONES } from './terrain'
+import { ONSEN_WALL_X, ZONES } from './terrain'
 import { getEmaTexture } from './textures'
 
-const PATH_Z = ZONES.rest[1]
+const [BATH_X, PATH_Z] = ZONES.rest
+/** 문(시메나와)에서 탕까지의 거리. 향로·석등·에마 걸이는 이 구간에 같은 비율로 놓인다. */
+const REACH = BATH_X - ONSEN_WALL_X
+const along = (fraction: number) => ONSEN_WALL_X + REACH * fraction
 /** 지붕을 얹은 향로(조코로): 청동 향로와 석재 받침, 피어오르는 연기. */
 function Jokoro({ position }: { position: [number, number, number] }) {
   const stone = useSurface('stone')
@@ -206,13 +209,13 @@ function Shimenawa({ x }: { x: number }) {
 export function OnsenApproach() {
   return (
     <group>
-      <Shimenawa x={7.2} />
-      <Jokoro position={[15.4, 0, PATH_Z]} />
+      <Shimenawa x={ONSEN_WALL_X} />
+      <Jokoro position={[along(0.306), 0, PATH_Z]} />
       {[
-        [13.1, -2.2],
-        [13.1, 2.2],
-        [17.8, -2.2],
-        [17.8, 2.2],
+        [along(0.22), -2.2],
+        [along(0.22), 2.2],
+        [along(0.395), -2.2],
+        [along(0.395), 2.2],
       ].map(([x, dz]) => (
         <Architecture
           key={`${x}${dz}`}
@@ -222,7 +225,7 @@ export function OnsenApproach() {
           yaw={dz > 0 ? Math.PI : 0}
         />
       ))}
-      <EmaHanger position={[24.4, 0, PATH_Z - 5.2]} />
+      <EmaHanger position={[along(0.64), 0, PATH_Z - 5.2]} />
     </group>
   )
 }

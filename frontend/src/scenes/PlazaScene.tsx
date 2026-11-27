@@ -3,6 +3,8 @@ import { CherryPetals } from './CherryPetals'
 import { CherryTree } from './CherryTree'
 import { EntranceArchitecture } from './EntranceArchitecture'
 import { CourtyardLandmarks } from './CourtyardLandmarks'
+import { Avenue } from './Avenue'
+import { OnsenCompound } from './OnsenCompound'
 import { FlowerBed, Ground, Village } from './Landmarks'
 import { Fuji } from './Fuji'
 import { GardenTerrain } from './GardenTerrain'
@@ -25,7 +27,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { PerspectiveCamera } from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 
-const PLAZA_TREE_SCALE = 1.76
+const PLAZA_TREE_SCALE = 1.9
 
 const ENTRY_POSITION: [number, number, number] = [0, 0, ENTRY_SPAWN_Z]
 const CAMERA_DISTANCE = 8.7
@@ -201,13 +203,14 @@ export function PlazaScene({
         <Forecourt />
         <FestivalRim />
         <Ground />
+        <Avenue />
+        <OnsenCompound />
         <CourtyardLandmarks />
         <Village />
         <Fuji />
         <Hills />
         <Castle />
         <Japan />
-
         <Zones onSelect={onOpenZone} visitor={visitor} />
         <PlazaVisitors
           players={world.players}
@@ -215,7 +218,9 @@ export function PlazaScene({
           onMove={world.move}
         />
         <group position={CHERRY_POSITION}>
-          <FlowerBed />
+          <group scale={PLAZA_TREE_SCALE / 1.3}>
+            <FlowerBed />
+          </group>
           <group scale={PLAZA_TREE_SCALE}>
             <CherryTree />
             <CherryPetals />

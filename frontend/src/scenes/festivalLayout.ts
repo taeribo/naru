@@ -4,7 +4,7 @@ import { WORLD_BOUNDS } from './terrain'
 
 /**
  * 맵 테두리 노점 거리 배치(순수 데이터). 뒷면은 월드 가장자리, 앞면은 광장 안쪽을 보며
- * 남쪽(스폰) 변과 본전 앞 중앙, 온천 구역은 비운다. 위치는 WORLD_BOUNDS 기준이다.
+ * 남쪽(스폰) 변과 본전 앞 중앙, 온천 접근로는 비운다. 위치는 WORLD_BOUNDS 기준이다.
  */
 export interface RimShop {
   x: number
@@ -135,7 +135,7 @@ function lay({ from, to, inward, yaw, seed, kindOffset }: Line) {
   }
 }
 
-// 북쪽 변: 본전 앞 중앙(x −16~16)과 온천 건물(동쪽)은 비운다.
+// 북쪽 변: 본전 앞 중앙(x −16~16)과 온천으로 가는 접근로(x 30~38)는 비운다.
 lay({
   from: [minX + 5, minZ + INSET],
   to: [-17.5, minZ + INSET],
@@ -143,6 +143,15 @@ lay({
   yaw: 0,
   seed: 11,
   kindOffset: 0,
+})
+// 북쪽 변 동쪽 끝: 온천 접근로 옆.
+lay({
+  from: [40, minZ + INSET],
+  to: [maxX - 4, minZ + INSET],
+  inward: [0, 1],
+  yaw: 0,
+  seed: 51,
+  kindOffset: 2,
 })
 // 서쪽 변: 북쪽 모서리 아래부터 스폰 옆까지.
 lay({
@@ -153,9 +162,9 @@ lay({
   seed: 23,
   kindOffset: 3,
 })
-// 동쪽 변: 온천 탕 남쪽에서 스폰 옆까지.
+// 동쪽 변: 북쪽 끝에서 스폰 옆까지.
 lay({
-  from: [maxX - INSET, -3],
+  from: [maxX - INSET, -30],
   to: [maxX - INSET, 41],
   inward: [-1, 0],
   yaw: -Math.PI / 2,
