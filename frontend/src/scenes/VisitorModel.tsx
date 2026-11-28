@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import {
   BoxGeometry,
@@ -552,40 +552,178 @@ function bakedLook(look: VisitorLook): Baked {
   return result
 }
 
+/** 서 있기(걷기 포함), 의자에 앉기, 앉아서 무언가 먹기, 긴 국자로 달걀 넣기. */
+export type VisitorPose = 'stand' | 'sit' | 'eat' | 'ladle' | 'hang' | 'ring'
+
+/** 종 치는 동작 길이(초): 줄을 잡고 → 뒤로 당겼다가 → 앞으로 밀어 치고 → 놓는다. */
+export const RING_SECONDS = 3
+/** 당목이 종에 닿는 순간(초). */
+export const RING_HIT = 1.55
+
+const smoothStep = (t: number) => {
+  const clamped = Math.min(1, Math.max(0, t))
+  return clamped * clamped * (3 - 2 * clamped)
+}
+
+/** 종 치는 동안 두 팔의 각도와 몸 기울기(앞으로 +). */
+function ringMotion(time: number) {
+  const reach = smoothStep(time / 0.5)
+  const pull =
+    smoothStep((time - 0.5) / 0.8) * (1 - smoothStep((time - 1.3) / 0.25))
+  const thrust =
+    smoothStep((time - 1.3) / 0.25) * (1 - smoothStep((time - 1.8) / 0.5))
+  const release = smoothStep((time - 2.2) / 0.7)
+  const arms =
+    (0.15 + 1.85 * reach + 0.25 * thrust - 0.25 * pull) * (1 - release) +
+    0.15 * release
+  return { arms, lean: -0.14 * pull + 0.12 * thrust }
+}
+
+/** 소원패를 걸이에 거는 동작 길이(초). */
+export const HANG_SECONDS = 2.4
+/** 소원패가 손에서 걸이로 옮겨 가는 순간(초). */
+export const HANG_RELEASE = 1.3
+
+/** 시간에 따른 소원패 든 팔의 각도: 들어 올려 걸이에 걸고 내린다. */
+function hangAngle(time: number) {
+  const smooth = (t: number) => t * t * (3 - 2 * t)
+  const rise = smooth(Math.min(1, time / 0.7))
+  const fall = smooth(Math.min(1, Math.max(0, (time - 1.6) / 0.8)))
+  return 0.15 + 2.15 * rise * (1 - fall)
+}
+
+const PLAQUE_GEOMETRY = new BoxGeometry(0.17, 0.15, 0.02)
+const PLAQUE_MATERIAL = new MeshStandardMaterial({
+  color: '#d9b27a',
+  roughness: 1,
+})
+
+/** 국자로 달걀을 떠서 우물에 넣는 동작 길이(초). */
+export const LADLE_SECONDS = 2.8
+/** 국자 끝이 물에 잠기는 순간(초). 이때 달걀이 국자에서 우물로 옮겨 간다. */
+const LADLE_DIP = 1.9
+
+/** 시간에 따른 국자 든 팔의 각도: 들어 올려 우물 위로 → 살짝 흔들다 물에 담그기 → 내려놓기. */
+function ladleAngle(time: number) {
+  const smooth = (t: number) => t * t * (3 - 2 * t)
+  const span = (from: number, to: number, start: number, end: number) =>
+    from +
+    (to - from) *
+      smooth(Math.min(1, Math.max(0, (time - start) / (end - start))))
+  if (time < 0.6) return span(0.3, 2.55, 0, 0.6)
+  if (time < 1.3) return 2.55 + Math.sin((time - 0.6) * 14) * 0.04
+  if (time < 2.3) return span(2.55, 2.3, 1.3, LADLE_DIP)
+  return span(2.3, 0.3, 2.3, LADLE_SECONDS)
+}
+
+const LADLE_LENGTH = 1.75
+const LADLE_HANDLE = new CylinderGeometry(0.016, 0.016, LADLE_LENGTH, 6)
+const LADLE_CUP = new SphereGeometry(0.1, 12, 8, 0, Math.PI * 2, Math.PI / 2)
+/** 나무 국자: 반사 없이 무광으로. */
+const LADLE_MATERIAL = new MeshStandardMaterial({
+  color: '#a8743f',
+  metalness: 0,
+  roughness: 1,
+  side: DoubleSide,
+})
+
+const EGG_GEOMETRY = new SphereGeometry(0.05, 10, 8).scale(1, 1.25, 1)
+const EGG_MATERIAL = new MeshStandardMaterial({
+  color: '#f3ecdc',
+  roughness: 0.5,
+})
+
 /**
  * 머리·팔·다리·옷을 갖춘 이등신 방문자. 앞(얼굴)은 -Z 방향.
  * motion.current(0~1)에 따라 팔다리를 흔들며 걷는다. 한 명당 그리기 5번.
+ * pose가 sit이면 엉덩이가 원점에 오도록 내려앉고, eat이면 손에 든 달걀을 입으로 가져간다.
  */
 export function VisitorModel({
   look,
   motion,
+  pose = 'stand',
 }: {
   look: VisitorLook
   motion?: RefObject<number>
+  pose?: VisitorPose
 }) {
   const model = bakedLook(look)
   const legs = useRef<(Group | null)[]>([])
   const arms = useRef<(Group | null)[]>([])
   const body = useRef<Group>(null)
+  const root = useRef<Group>(null)
   const phase = useRef(0)
+  const settle = useRef(0)
+  const bite = useRef(0)
+  const ladleTime = useRef(0)
+  const hangTime = useRef(0)
+  const ringTime = useRef(0)
+  const [holdingPlaque, setHoldingPlaque] = useState(true)
+  const [holdingEgg, setHoldingEgg] = useState(true)
 
   useFrame((_state, delta) => {
-    const speed = Math.min(1, motion?.current ?? 0)
-    if (speed === 0 && phase.current === 0) return
+    const speed = pose === 'stand' ? Math.min(1, motion?.current ?? 0) : 0
+    const seated = pose === 'sit' || pose === 'eat' ? 1 : 0
+    const ease = Math.min(1, delta * 8)
+    settle.current += (seated - settle.current) * ease
+    if (Math.abs(seated - settle.current) < 0.001) settle.current = seated
+    const sit = settle.current
+    if (speed === 0 && phase.current === 0 && sit === 0 && pose === 'stand')
+      return
     phase.current = speed === 0 ? 0 : phase.current + delta * 9 * speed
+    bite.current = pose === 'eat' ? bite.current + delta : 0
+    ladleTime.current = pose === 'ladle' ? ladleTime.current + delta : 0
+    hangTime.current = pose === 'hang' ? hangTime.current + delta : 0
+    ringTime.current = pose === 'ring' ? ringTime.current + delta : 0
+    const ring = ringMotion(ringTime.current)
+    const released = hangTime.current >= HANG_RELEASE
+    if (pose === 'hang' && released === holdingPlaque)
+      setHoldingPlaque(!released)
+    if (pose !== 'hang' && !holdingPlaque) setHoldingPlaque(true)
+    const dipped = ladleTime.current >= LADLE_DIP
+    if (pose === 'ladle' && dipped === holdingEgg) setHoldingEgg(!dipped)
+    if (pose !== 'ladle' && !holdingEgg) setHoldingEgg(true)
     const swing = Math.sin(phase.current) * speed
+    // 앉으면 다리를 앞으로 내밀고, 손은 무릎 위에 모은다.
     legs.current.forEach((limb, index) => {
-      if (limb) limb.rotation.x = swing * 0.55 * (index === 0 ? 1 : -1)
+      if (limb)
+        limb.rotation.x =
+          swing * 0.55 * (index === 0 ? 1 : -1) * (1 - sit) + 1.3 * sit
     })
+    // 먹을 때는 한쪽 팔을 입가로 올렸다 내렸다 한다.
+    const chew = pose === 'eat' ? 2.35 + Math.sin(bite.current * 3) * 0.18 : 0
     arms.current.forEach((limb, index) => {
-      if (limb) limb.rotation.x = swing * 0.5 * (index === 0 ? -1 : 1)
+      if (!limb) return
+      const walking = swing * 0.5 * (index === 0 ? -1 : 1) * (1 - sit)
+      if (pose === 'ring') {
+        limb.rotation.x = ring.arms
+        return
+      }
+      if (pose === 'hang') {
+        limb.rotation.x = index === 1 ? hangAngle(hangTime.current) : 0.15
+        return
+      }
+      if (pose === 'ladle') {
+        limb.rotation.x = index === 1 ? ladleAngle(ladleTime.current) : 0.15
+        return
+      }
+      const seatedArm = index === 1 && pose === 'eat' ? chew : 0.45
+      limb.rotation.x = walking + seatedArm * sit
     })
     if (body.current)
-      body.current.position.y = Math.abs(Math.cos(phase.current)) * 0.03 * speed
+      body.current.position.y =
+        Math.abs(Math.cos(phase.current)) * 0.03 * speed +
+        (pose === 'hang'
+          ? Math.sin(Math.min(1, hangTime.current / 2.4) * Math.PI) * 0.06
+          : 0)
+    if (root.current) {
+      root.current.position.y = -model.hip * sit
+      root.current.rotation.x = pose === 'ring' ? -ring.lean : 0
+    }
   })
 
   return (
-    <>
+    <group ref={root}>
       {[-1, 1].map((side, index) => (
         <group
           key={side}
@@ -608,9 +746,46 @@ export function VisitorModel({
             }}
           >
             <mesh geometry={model.arms[index]} material={model.material} />
+            {index === 1 && pose === 'ladle' && (
+              <group position-y={-0.36}>
+                <mesh
+                  geometry={LADLE_HANDLE}
+                  material={LADLE_MATERIAL}
+                  position-y={-LADLE_LENGTH / 2}
+                />
+                <mesh
+                  geometry={LADLE_CUP}
+                  material={LADLE_MATERIAL}
+                  position={[0, -LADLE_LENGTH, 0.02]}
+                  rotation-x={-Math.PI / 2}
+                />
+                {holdingEgg && (
+                  <mesh
+                    geometry={EGG_GEOMETRY}
+                    material={EGG_MATERIAL}
+                    position={[0, -LADLE_LENGTH, -0.03]}
+                    rotation-x={Math.PI / 2}
+                  />
+                )}
+              </group>
+            )}
+            {index === 1 && pose === 'hang' && holdingPlaque && (
+              <mesh
+                geometry={PLAQUE_GEOMETRY}
+                material={PLAQUE_MATERIAL}
+                position={[0, -0.43, -0.04]}
+              />
+            )}
+            {index === 1 && pose === 'eat' && (
+              <mesh
+                geometry={EGG_GEOMETRY}
+                material={EGG_MATERIAL}
+                position={[0, -0.41, -0.04]}
+              />
+            )}
           </group>
         ))}
       </group>
-    </>
+    </group>
   )
 }

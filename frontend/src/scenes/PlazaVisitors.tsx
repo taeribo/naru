@@ -5,6 +5,7 @@ import type { Group } from 'three'
 import type { WorldPlayer } from '../services/world'
 import { COURTYARD, groundHeight } from './terrain'
 import { VisitorModel, lookFor } from './VisitorModel'
+import type { Snack } from './OnsenTamago'
 import { nicknamesFor } from './nickname'
 
 /** 이름표가 또렷이 보이는 거리와 사라지는 거리. */
@@ -17,10 +18,13 @@ function Visitor({
   player,
   own,
   nickname,
+  snack,
 }: {
   player: WorldPlayer
   own: boolean
   nickname: string
+  /** 내 캐릭터의 온천 달걀 체험 자리와 자세(내 화면에서만 보인다). */
+  snack?: Snack | null
 }) {
   const group = useRef<Group>(null)
   const tag = useRef<HTMLSpanElement>(null)
@@ -32,6 +36,18 @@ function Visitor({
   useFrame(({ camera }, delta) => {
     if (!group.current) return
     const blend = 1 - Math.exp(-12 * delta)
+    // 정해진 자리에 도착하면 그 높이·방향에 맞춰 서거나 앉는다.
+    const seat = snack?.arrived ? snack.spot : null
+    if (seat) {
+      group.current.position.x += (seat.x - group.current.position.x) * blend
+      group.current.position.z += (seat.z - group.current.position.z) * blend
+      group.current.position.y += (seat.y - group.current.position.y) * blend
+      const turn = seat.yaw - group.current.rotation.y
+      group.current.rotation.y +=
+        Math.atan2(Math.sin(turn), Math.cos(turn)) * blend
+      motion.current = 0
+      return
+    }
     const dx = player.x - group.current.position.x
     const dz = player.z - group.current.position.z
     if (Math.hypot(dx, dz) > 0.025) {
@@ -61,7 +77,11 @@ function Visitor({
 
   return (
     <group ref={group} position={initial.current}>
-      <VisitorModel look={look} motion={motion} />
+      <VisitorModel
+        look={look}
+        motion={motion}
+        pose={snack?.arrived ? snack.pose : 'stand'}
+      />
       <Html position-y={1.72} center zIndexRange={[1, 0]}>
         <span
           ref={tag}
@@ -70,7 +90,7 @@ function Visitor({
           {nickname}
         </span>
       </Html>
-      {own && (
+      {own && !(snack?.arrived && snack.spot.y > 0.1) && (
         <mesh rotation-x={-Math.PI / 2} position-y={0.025}>
           <ringGeometry args={[0.37, 0.43, 22]} />
           <meshBasicMaterial color="#ffe2a2" />
@@ -84,10 +104,12 @@ export function PlazaVisitors({
   players,
   ownId,
   onMove,
+  snack,
 }: {
   players: WorldPlayer[]
   ownId: string | null
   onMove: (x: number, z: number) => void
+  snack?: Snack | null
 }) {
   const nicknames = useMemo(
     () => nicknamesFor(players.map((player) => player.id)),
@@ -114,6 +136,7 @@ export function PlazaVisitors({
           player={player}
           own={player.id === ownId}
           nickname={nicknames.get(player.id) ?? ''}
+          snack={player.id === ownId ? snack : null}
         />
       ))}
     </>

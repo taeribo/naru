@@ -276,7 +276,9 @@ textarea:focus-visible {
 
 .zone-label {
   display: grid;
+  place-content: center;
   gap: 0.15rem;
+  line-height: 1.2;
   padding: 0.5rem 1.1rem;
   border: 1px solid #c99a6c;
   border-radius: 999px;
@@ -472,4 +474,335 @@ textarea:focus-visible {
 
 .visitor-tag--own {
   color: #ffd38a;
+}
+
+/* 온천 달걀 체험 */
+.tamago-panel {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.tamago-panel__note {
+  margin: 0;
+  padding: 0.45rem 1rem;
+  border: 1px solid #c99a6c;
+  border-radius: 999px;
+  background: #382345d9;
+  color: #ffe3b0;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.tamago-panel__track {
+  display: block;
+  width: 11rem;
+  height: 0.45rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #382345cc;
+  box-shadow: inset 0 0 0 1px #c99a6c88;
+}
+
+.tamago-panel__bar {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ffd38a, #ffb46b);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+/* 오른쪽 위: 지도·소리 버튼 (후원 버튼 왼쪽에 나란히) */
+.corner-tools {
+  position: absolute;
+  inset: 0 calc(54px + 0.75rem) auto auto;
+  display: flex;
+  gap: 0.75rem;
+  pointer-events: auto;
+}
+
+.corner-button {
+  position: relative;
+  display: grid;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  place-items: center;
+  border: 1.5px solid #e6c08a99;
+  border-radius: 50%;
+  background: #2a1646aa;
+  box-shadow: 0 6px 18px #0006;
+  color: #ffe6b8;
+  cursor: pointer;
+}
+
+.corner-button svg {
+  width: 25px;
+  height: 25px;
+}
+
+.corner-button small {
+  position: absolute;
+  bottom: -1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px #000a;
+}
+
+.corner-button--off {
+  color: #c4b2d2;
+}
+
+.corner-button:hover {
+  background: #3a2160cc;
+}
+
+.corner-button:focus-visible {
+  outline: 2px solid #ffe3b0;
+  outline-offset: 2px;
+}
+
+/* 새 해 지도 */
+.plaza-map {
+  width: min(1000px, calc(100% - 2rem));
+  max-width: none;
+  max-height: calc(100% - 2rem);
+  padding: 0;
+  overflow: hidden;
+  border: 1.5px solid #e6c08a99;
+  border-radius: 26px;
+  background: #2a1646ee;
+  box-shadow: 0 18px 50px #000a;
+  color: #fff2db;
+}
+
+.plaza-map::backdrop {
+  background: #1a0f2a8c;
+}
+
+.plaza-map__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem 0.75rem;
+}
+
+.plaza-map__head h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-shadow: 0 2px 6px #0008;
+}
+
+.plaza-map__close {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  background: transparent;
+  color: #fff2db;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.plaza-map__frame {
+  display: grid;
+  place-items: center;
+  background: #120a1e;
+}
+
+.plaza-map__stage {
+  position: relative;
+  width: min(100%, calc((100dvh - 10rem) * 1400 / 1150));
+  aspect-ratio: 1400 / 1150;
+}
+
+.plaza-map__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: saturate(1.08) brightness(1.06);
+  user-select: none;
+}
+
+/* 장소 영역: 평소에는 보이지 않고, 갖다 대면 테두리가 빛난다 */
+.plaza-map__spot {
+  position: absolute;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+}
+
+.plaza-map__spot:hover,
+.plaza-map__spot:focus-visible,
+.plaza-map__spot--on {
+  border-color: #ffd38acc;
+  background: #ffd38a1f;
+  box-shadow: 0 0 18px 2px #ffb46b88;
+  outline: none;
+}
+
+.plaza-map__tip {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.45rem 0.9rem 0.45rem 0.45rem;
+  border: 1px solid #e6c08a;
+  border-radius: 16px;
+  background: #2a1646f2;
+  box-shadow: 0 6px 18px #0009;
+  transform: translate(-50%, calc(-100% - 12px));
+  white-space: nowrap;
+}
+
+/* 말풍선과 장소 사이 틈을 덮어, 마우스를 옮기는 동안 말풍선이 닫히지 않게 한다. */
+.plaza-map__tip::after {
+  position: absolute;
+  inset: 100% 0 auto;
+  height: 14px;
+  content: '';
+}
+
+.plaza-map__walk {
+  margin-left: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border: 1.5px solid #e6c08a;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffd38a, #e9a95a);
+  color: #2a1646;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.plaza-map__walk:hover {
+  filter: brightness(1.08);
+}
+
+.plaza-map__walk:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.plaza-map__tip img {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.plaza-map__tip strong {
+  display: block;
+  color: #ffe3b0;
+}
+
+.plaza-map__tip span {
+  font-size: 0.78rem;
+  color: #e9d7c4;
+}
+
+.plaza-map__me,
+.plaza-map__other {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition:
+    left 0.3s linear,
+    top 0.3s linear;
+}
+
+.plaza-map__me {
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  background: #4fc3f7;
+  animation: plaza-map-ping 1.8s ease-out infinite;
+}
+
+.plaza-map__me b {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #0d3b52e6;
+  color: #e6f7ff;
+  font-size: 12px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.plaza-map__other {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #fff8;
+  background: #c9a6ff;
+}
+
+@keyframes plaza-map-ping {
+  0% {
+    box-shadow: 0 0 0 0 #4fc3f7aa;
+  }
+
+  100% {
+    box-shadow: 0 0 0 16px #4fc3f700;
+  }
+}
+
+.plaza-map__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3.6rem;
+  padding: 0.6rem 1.25rem 0.8rem;
+  color: #e9d7c4;
+  font-size: 0.86rem;
+}
+
+.plaza-map__legend {
+  display: flex;
+  gap: 0.9rem;
+}
+
+.plaza-map__legend i {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 5px;
+  border-radius: 50%;
+  vertical-align: -1px;
+}
+
+.plaza-map__key--me {
+  background: #4fc3f7;
+}
+
+.plaza-map__key--other {
+  background: #c9a6ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plaza-map__me {
+    animation: none;
+  }
 }
