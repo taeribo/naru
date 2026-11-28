@@ -10,6 +10,7 @@ import {
   Vector2,
   Vector3,
 } from 'three'
+import { bellParts } from './BellRing'
 import { roofGeometry } from './shapes'
 import { getEmaTexture, getSignTexture } from './textures'
 
@@ -257,24 +258,46 @@ export function BellHall() {
         <cylinderGeometry args={[0.04, 0.04, 0.5, 6]} />
         <meshStandardMaterial color="#3a2a1a" />
       </mesh>
-      <mesh geometry={bell} position-y={1.75} scale={0.95}>
-        <meshStandardMaterial
-          color="#6a5a3a"
-          metalness={0.6}
-          roughness={0.4}
-          side={DoubleSide}
-        />
-      </mesh>
-      {[-0.35, 0.35].map((x) => (
-        <mesh key={x} position={[x, 2.3, 1.05]}>
-          <cylinderGeometry args={[0.012, 0.012, 1.4, 4]} />
-          <meshStandardMaterial color="#d9c28a" />
+      {/* 범종은 윗고리를 축으로 흔들릴 수 있게 꼭대기(3.0m)에 매단다. */}
+      <group
+        position-y={3.0}
+        ref={(node) => {
+          bellParts.bell = node
+        }}
+      >
+        {/* 제야의 종처럼 크게: 높이 약 1.55, 아래 지름 약 1.55(구역 배율 전). */}
+        <mesh geometry={bell} position-y={-1.85} scale={1.55}>
+          <meshStandardMaterial
+            color="#6a5a3a"
+            metalness={0.6}
+            roughness={0.4}
+            side={DoubleSide}
+          />
         </mesh>
-      ))}
-      <mesh position={[0, 1.55, 1.05]} rotation-x={Math.PI / 2}>
-        <cylinderGeometry args={[0.13, 0.13, 1.7, 10]} />
-        <meshStandardMaterial {...timber} color="#8a5a2a" roughness={1} />
-      </mesh>
+      </group>
+      {/* 당목(종 치는 통나무)과 매단 밧줄: 밧줄 위쪽을 축으로 앞뒤로 흔들린다. */}
+      <group
+        position={[0, 3.0, 1.65]}
+        ref={(node) => {
+          bellParts.striker = node
+        }}
+      >
+        {[-0.35, 0.35].map((x) => (
+          <mesh key={x} position={[x, -0.7, 0]}>
+            <cylinderGeometry args={[0.012, 0.012, 1.4, 4]} />
+            <meshStandardMaterial color="#d9c28a" />
+          </mesh>
+        ))}
+        <mesh position-y={-1.45} rotation-x={Math.PI / 2}>
+          <cylinderGeometry args={[0.13, 0.13, 1.7, 10]} />
+          <meshStandardMaterial {...timber} color="#8a5a2a" roughness={1} />
+        </mesh>
+        {/* 당목 뒤끝에 늘어진 당김 줄: 방문자가 이 줄을 잡아 당겼다 놓는다. */}
+        <mesh position={[0, -1.83, 0.8]}>
+          <cylinderGeometry args={[0.022, 0.022, 0.65, 6]} />
+          <meshStandardMaterial color="#c9483a" roughness={1} />
+        </mesh>
+      </group>
     </group>
   )
 }

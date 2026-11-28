@@ -13,6 +13,10 @@ import { Sky } from './Sky'
 import { FestivalRim } from './FestivalRim'
 import { Forecourt } from './Forecourt'
 import { OnsenApproach } from './OnsenApproach'
+import { OnsenTamago } from './OnsenTamago'
+import { WishHang } from './WishHang'
+import { BellRing } from './BellRing'
+import type { Snack } from './OnsenTamago'
 import { StreetStalls } from './StreetStalls'
 import { CHERRY_POSITION, ENTRY_SPAWN_Z, groundHeight } from './terrain'
 import { preloadSurfaces } from './surfaces'
@@ -178,16 +182,25 @@ export function PlazaScene({
   onOpenZone,
   onCameraBearing,
   world,
+  wishSignal = 0,
+  bellSignal = 0,
 }: {
   onOpenZone: (zone: ZoneId) => void
   onCameraBearing: (bearing: number) => void
+  /** 소원패를 걸 때마다 늘어나는 값. 늘어나면 걸이 앞으로 가서 패를 건다. */
+  wishSignal?: number
+  /** 종 울리기를 누를 때마다 늘어나는 값. 늘어나면 종각으로 가서 종을 친다. */
+  bellSignal?: number
   world: {
     players: WorldPlayer[]
     id: string | null
     move: (x: number, z: number) => void
+    /** 의자·우물 앞처럼 정해진 자리까지 들어가는 이동(없으면 move). */
+    arrive?: (x: number, z: number) => void
   }
 }) {
   const [canRender] = useState(supportsWebGl)
+  const [snack, setSnack] = useState<Snack | null>(null)
   const [dpr, setDpr] = useState(() => Math.min(window.devicePixelRatio, 1.35))
   const visitor = world.players.find((player) => player.id === world.id)
   if (!canRender) {
@@ -252,6 +265,26 @@ export function PlazaScene({
         <EntranceArchitecture />
         <StreetStalls />
         <OnsenApproach />
+        <BellRing
+          signal={bellSignal}
+          visitor={visitor}
+          snack={snack}
+          onSnack={setSnack}
+          onMove={world.arrive ?? world.move}
+        />
+        <WishHang
+          signal={wishSignal}
+          visitor={visitor}
+          snack={snack}
+          onSnack={setSnack}
+          onMove={world.arrive ?? world.move}
+        />
+        <OnsenTamago
+          visitor={visitor}
+          onMove={world.arrive ?? world.move}
+          snack={snack}
+          onSnack={setSnack}
+        />
         <Forecourt />
         <FestivalRim />
         <Ground />
@@ -267,6 +300,7 @@ export function PlazaScene({
           players={world.players}
           ownId={world.id}
           onMove={world.move}
+          snack={snack}
         />
         <group position={CHERRY_POSITION}>
           <FlowerBed />
