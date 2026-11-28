@@ -1,3 +1,4 @@
+import { onsenOpen } from './onsenEntry'
 import { detourAroundCherry } from './route'
 import { CHERRY_POSITION, WORLD_BOUNDS } from './terrain'
 
@@ -96,6 +97,11 @@ export function loadWalkableMap() {
           }
         }
       }
+    }
+    // 노천탕 돌계단과 탕 안은 찍은 지도에서 테두리·바위에 막혀 있으므로 길을 열어 둔다.
+    for (let index = 0; index < grown.length; index += 1) {
+      const { x, z } = centerOf(index)
+      if (onsenOpen(x, z)) grown[index] = 0
     }
     blocked = grown
   }

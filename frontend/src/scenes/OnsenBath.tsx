@@ -32,20 +32,78 @@ function random(seed: number) {
   }
 }
 
+/** 타원 윤곽이 각도마다 늘거나 주는 비율(자연석으로 둘러싼 듯한 일그러짐). */
+export function wobble(angle: number) {
+  return (
+    1 +
+    0.07 * Math.sin(3 * angle + 0.8) +
+    0.05 * Math.sin(5 * angle + 2.1) +
+    0.03 * Math.sin(2 * angle)
+  )
+}
+
+/**
+ * 탕 들어가는 돌계단(서쪽, 탈의 쉼터 옆). 로컬 x 구간마다 디딤돌 윗면 높이.
+ * 바깥 3단으로 올라 테두리를 넘는 디딤판을 지나, 안쪽 2단으로 물속에 내려간다.
+ */
+export const ENTRY = {
+  z: -1.0,
+  halfWidth: 0.85,
+  steps: [
+    { from: -10.6, to: -10.1, top: 0.16 },
+    { from: -10.1, to: -9.6, top: 0.32 },
+    { from: -9.6, to: -9.1, top: 0.48 },
+    { from: -9.1, to: -7.2, top: 0.66 },
+    { from: -7.2, to: -6.7, top: 0.42 },
+    { from: -6.7, to: -6.2, top: 0.24 },
+  ],
+}
+
 /** 자연석으로 둘러싼 듯 살짝 일그러진 타원 윤곽. */
 function outline(a: number, b: number, count = 56) {
   return Array.from({ length: count }, (_, index) => {
     const angle = (index / count) * Math.PI * 2
-    const wobble =
-      1 +
-      0.07 * Math.sin(3 * angle + 0.8) +
-      0.05 * Math.sin(5 * angle + 2.1) +
-      0.03 * Math.sin(2 * angle)
     return new Vector2(
-      Math.cos(angle) * a * wobble,
-      Math.sin(angle) * b * wobble,
+      Math.cos(angle) * a * wobble(angle),
+      Math.sin(angle) * b * wobble(angle),
     )
   })
+}
+
+/** 돌계단: 납작한 자연석 디딤돌을 높이대로 쌓는다. */
+function EntrySteps() {
+  const stone = useSurface('stone')
+  return (
+    <group position-z={ENTRY.z}>
+      {ENTRY.steps.map(({ from, to, top }, index) => (
+        <mesh
+          key={index}
+          position={[(from + to) / 2, top / 2, 0]}
+          rotation-y={(index % 2 ? -1 : 1) * 0.03}
+          castShadow
+          receiveShadow
+        >
+          <boxGeometry args={[to - from + 0.04, top, ENTRY.halfWidth * 2]} />
+          <meshStandardMaterial
+            {...stone}
+            color={index === 3 ? '#a59fa6' : '#8f8994'}
+            roughness={1}
+          />
+        </mesh>
+      ))}
+      {/* 계단 양옆 경계석 */}
+      {[-1, 1].map((side) => (
+        <mesh
+          key={side}
+          position={[-9.85, 0.12, side * (ENTRY.halfWidth + 0.14)]}
+          castShadow
+        >
+          <boxGeometry args={[1.6, 0.24, 0.22]} />
+          <meshStandardMaterial {...stone} color="#7d7782" roughness={1} />
+        </mesh>
+      ))}
+    </group>
+  )
 }
 
 /** 잔물결 법선 맵: 이어 붙여도 티가 나지 않는 사인파 합성. */
@@ -110,13 +168,18 @@ function Pool() {
       BATH.b + BATH.curb + 0.15,
       34,
     )
-    const stones = rim.map((point) => ({
-      x: point.x,
-      z: -point.y,
-      size: 0.55 + rand() * 0.55,
-      yaw: rand() * 6,
-      lean: 0.7 + rand() * 0.5,
-    }))
+    // 돌계단 자리의 바위는 치워 입구를 낸다.
+    const opening = (x: number, z: number) =>
+      x < 0 && Math.abs(z - ENTRY.z) < ENTRY.halfWidth + 1.2
+    const stones = rim
+      .filter((point) => !opening(point.x, -point.y))
+      .map((point) => ({
+        x: point.x,
+        z: -point.y,
+        size: 0.55 + rand() * 0.55,
+        yaw: rand() * 6,
+        lean: 0.7 + rand() * 0.5,
+      }))
     return {
       curb: extruded,
       rocks: stones,
@@ -512,6 +575,7 @@ export function OnsenBath() {
   return (
     <group>
       <Pool />
+      <EntrySteps />
       <Floaters />
 
       {/* 건물 쪽 나무 데크 */}
