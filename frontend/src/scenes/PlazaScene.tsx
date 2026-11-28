@@ -96,17 +96,69 @@ function VisitorCamera({
   )
 }
 
-function ViewportSettings() {
+/** 해상도 배율 단계. 프레임이 떨어지면 한 단계씩 낮추고, 여유가 생기면 다시 올린다. */
+const DPR_STEPS = [0.75, 0.9, 1, 1.15, 1.35]
+
+/**
+ * Canvas는 다시 그려질 때마다 dpr 속성값으로 해상도를 되돌리므로,
+ * 여기서 정한 값을 onDpr로 올려 Canvas의 dpr 속성 자체를 바꾼다.
+ */
+function ViewportSettings({ onDpr }: { onDpr: (dpr: number) => void }) {
   const compact = useThree((state) => state.size.width < 680)
-  const setDpr = useThree((state) => state.setDpr)
   const camera = useThree((state) => state.camera)
+  const [step, setStep] = useState(DPR_STEPS.length - 1)
+  const frames = useRef({ count: 0, elapsed: 0, cooldown: 0 })
+
   useEffect(() => {
-    setDpr(Math.min(window.devicePixelRatio, compact ? 1 : 1.35))
+    const ceiling = Math.min(window.devicePixelRatio, compact ? 1 : 1.35)
+    onDpr(Math.min(ceiling, DPR_STEPS[step]))
     if (camera instanceof PerspectiveCamera) {
       camera.fov = compact ? 82 : PLAZA_CAMERA.fov
       camera.updateProjectionMatrix()
     }
-  }, [camera, compact, setDpr])
+  }, [camera, compact, onDpr, step])
+
+  // 1.5초마다 평균 프레임을 보고 해상도를 조절한다.
+  useFrame((_state, delta) => {
+    const sample = frames.current
+    sample.count += 1
+    sample.elapsed += Math.min(delta, 0.25)
+    if (sample.elapsed < 1.5) return
+    const fps = sample.count / sample.elapsed
+    sample.count = 0
+    sample.elapsed = 0
+    if (sample.cooldown > 0) {
+      sample.cooldown -= 1
+      return
+    }
+    if (fps < 45 && step > 0) {
+      setStep(step - 1)
+      sample.cooldown = 1
+    } else if (fps > 58 && step < DPR_STEPS.length - 1) {
+      setStep(step + 1)
+      sample.cooldown = 2
+    }
+  })
+  return null
+}
+
+/** 그림자 지도 갱신 간격(프레임). 광장 대부분이 멈춰 있어 매 프레임 다시 그릴 필요가 없다. */
+const SHADOW_REFRESH_FRAMES = 12
+
+function ThrottledShadows() {
+  const gl = useThree((state) => state.gl)
+  const frame = useRef(0)
+  useEffect(() => {
+    gl.shadowMap.autoUpdate = false
+    gl.shadowMap.needsUpdate = true
+    return () => {
+      gl.shadowMap.autoUpdate = true
+    }
+  }, [gl])
+  useFrame(() => {
+    frame.current = (frame.current + 1) % SHADOW_REFRESH_FRAMES
+    if (frame.current === 0) gl.shadowMap.needsUpdate = true
+  })
   return null
 }
 
@@ -136,6 +188,7 @@ export function PlazaScene({
   }
 }) {
   const [canRender] = useState(supportsWebGl)
+  const [dpr, setDpr] = useState(() => Math.min(window.devicePixelRatio, 1.35))
   const visitor = world.players.find((player) => player.id === world.id)
   if (!canRender) {
     return (
@@ -147,7 +200,7 @@ export function PlazaScene({
     <Canvas
       className="plaza-canvas"
       camera={PLAZA_CAMERA}
-      dpr={[1, 1.35]}
+      dpr={dpr}
       shadows={
         window.matchMedia('(min-width: 680px) and (pointer: fine)').matches
       }
@@ -155,7 +208,8 @@ export function PlazaScene({
         <p className="world-fallback">3D 장면을 보려면 WebGL 2가 필요합니다.</p>
       }
     >
-      <ViewportSettings />
+      <ViewportSettings onDpr={setDpr} />
+      <ThrottledShadows />
       <Suspense fallback={null}>
         <fog attach="fog" args={['#ada3ad', 45, 258]} />
         <hemisphereLight
