@@ -5,7 +5,7 @@ import { useWorld } from '../services/world'
 import { DonationDialog } from '../features/DonationDialog'
 import { WishPanel } from '../features/WishPanel'
 import { PlazaMovement } from '../scenes/PlazaMovement'
-import type { PlazaDirection } from '../scenes/PlazaMovement'
+import type { PlazaVector } from '../scenes/PlazaMovement'
 import { PlazaScene } from '../scenes/PlazaScene'
 import { WORLD_BOUNDS, ZONES } from '../scenes/terrain'
 import { ZONE_LABELS } from '../scenes/Zones'
@@ -62,20 +62,18 @@ export function App() {
     setPanel(null)
   }
 
-  function moveInDirection(direction: PlazaDirection) {
+  function moveInDirection(vector: PlazaVector) {
     if (world.status !== 'joined' || !ownPlayer || panel) return
-    const angle =
-      cameraBearing.current +
-      { up: Math.PI, left: -Math.PI / 2, down: 0, right: Math.PI / 2 }[
-        direction
-      ]
+    // 화면 아래쪽(y+)이 카메라 쪽, 위쪽이 카메라가 바라보는 쪽이다.
+    const angle = cameraBearing.current + Math.atan2(vector.x, vector.y)
+    const reach = 0.7 + 0.9 * Math.min(1, Math.hypot(vector.x, vector.y))
     const x = Math.max(
       WORLD_BOUNDS.minX,
-      Math.min(WORLD_BOUNDS.maxX, ownPlayer.x + Math.sin(angle) * 1.4),
+      Math.min(WORLD_BOUNDS.maxX, ownPlayer.x + Math.sin(angle) * reach),
     )
     const z = Math.max(
       WORLD_BOUNDS.minZ,
-      Math.min(WORLD_BOUNDS.maxZ, ownPlayer.z + Math.cos(angle) * 1.4),
+      Math.min(WORLD_BOUNDS.maxZ, ownPlayer.z + Math.cos(angle) * reach),
     )
     world.move(x, z)
   }
