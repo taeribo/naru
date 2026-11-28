@@ -77,6 +77,15 @@ export function App() {
 
   useEffect(() => () => window.clearTimeout(closeTimer.current), [])
 
+  function openPanel(zone: ZoneId) {
+    if (zone === 'wish') {
+      route.current = []
+      heading.current = null
+      if (ownPlayer) world.move(ownPlayer.x, ownPlayer.z)
+    }
+    setPanel(zone)
+  }
+
   function closePanel() {
     if (
       panel !== 'fortune' ||
@@ -98,6 +107,12 @@ export function App() {
     setWishNotice((count) => count + 1)
     setWishHangs((count) => count + 1)
     setPanel((current) => (current === 'wish' ? null : current))
+  }
+
+  function moveToZone(zone: ZoneId) {
+    if (world.status !== 'joined' || !ownPlayer || panel) return
+    const [x, z] = ZONES[zone]
+    walkTo(x, z + (zone === 'rest' ? 2.5 : 4.5))
   }
 
   function visitRestArea() {
@@ -149,7 +164,7 @@ export function App() {
         world={routedWorld}
         wishSignal={wishHangs}
         bellSignal={bellRings}
-        onOpenZone={setPanel}
+        onOpenZone={openPanel}
         onCameraBearing={(bearing) => {
           cameraBearing.current = bearing
         }}
@@ -162,7 +177,7 @@ export function App() {
               key={id}
               type="button"
               className="plaza-button plaza-button--menu"
-              onClick={() => setPanel(id as ZoneId)}
+              onClick={() => moveToZone(id as ZoneId)}
             >
               {label}
               <span aria-hidden="true" className="plaza-chevron">

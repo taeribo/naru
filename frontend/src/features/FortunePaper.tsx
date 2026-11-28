@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FortuneGrade } from '../services/fortunes'
 
+import { getOmikujiReading } from './omikuji'
+
 const UNFOLD_DURATION = 1_000
 
 function playPaperSound() {
@@ -44,10 +46,15 @@ function playPaperSound() {
 export function FortunePaper({
   grade,
   message,
+  category,
+  categoryName,
 }: {
   grade: FortuneGrade
   message: string
+  category: string
+  categoryName?: string
 }) {
+  const { verse, entries } = getOmikujiReading(category)
   const [phase, setPhase] = useState<'folded' | 'unfolding' | 'open'>('folded')
   const started = useRef(false)
   const timer = useRef<number | undefined>(undefined)
@@ -123,6 +130,9 @@ export function FortunePaper({
                     tabIndex={-1}
                     className="fortune-paper-result"
                   >
+                    {categoryName && (
+                      <p className="fortune-paper-category">{categoryName}</p>
+                    )}
                     {grade && (
                       <p className="fortune-paper-grade">
                         <span lang="ja">{grade.hanja}</span>
@@ -130,7 +140,18 @@ export function FortunePaper({
                         <span>{grade.name}</span>
                       </p>
                     )}
+                    <p className="fortune-paper-verse">{verse}</p>
                     <p className="fortune-paper-message">{message}</p>
+                    <dl className="fortune-paper-details">
+                      {entries.map(([label, japanese, advice]) => (
+                        <div key={japanese}>
+                          <dt>
+                            {label} <span lang="ja">{japanese}</span>
+                          </dt>
+                          <dd>{advice}</dd>
+                        </div>
+                      ))}
+                    </dl>
                   </div>
                 )}
               </div>
