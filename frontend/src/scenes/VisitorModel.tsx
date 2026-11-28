@@ -516,6 +516,144 @@ function hakamaParts(look: Extract<VisitorLook, { outfit: 'hakama' }>): Parts {
   }
 }
 
+/** 온천 수건(흰 무명). */
+const TOWEL = '#f4f1ea'
+const TOWEL_FOLD = '#e4ddd0'
+
+/** 머리 위에 접어 올린 물수건. 끝에 쪽빛 줄무늬. */
+function headTowel(): Piece[] {
+  return [
+    {
+      geometry: box(0.3, 0.05, 0.17),
+      color: TOWEL,
+      position: [0, HEAD_Y + 0.265, -0.05],
+      rotation: [0.12, 0.18, 0.07],
+    },
+    {
+      geometry: box(0.26, 0.03, 0.15),
+      color: TOWEL_FOLD,
+      position: [0.01, HEAD_Y + 0.295, -0.05],
+      rotation: [0.12, 0.18, 0.07],
+    },
+    {
+      geometry: box(0.04, 0.052, 0.172),
+      color: '#6f93c0',
+      position: [0.11, HEAD_Y + 0.279, -0.028],
+      rotation: [0.12, 0.18, 0.07],
+    },
+  ]
+}
+
+/** 맨다리와 맨발. 원점은 골반 관절. */
+function bareLeg(drop: number): Piece[] {
+  return [
+    {
+      geometry: cylinder(0.052, 0.046, drop, 10),
+      color: SKIN,
+      position: [0, -drop / 2, 0],
+    },
+    {
+      geometry: box(0.075, 0.04, 0.13),
+      color: SKIN,
+      position: [0, 0.02 - drop, -0.025],
+    },
+  ]
+}
+
+/** 온천 차림(여): 어깨를 드러낸 전신 수건 가운, 맨발, 머리 물수건. */
+function kimonoBathParts(
+  look: Extract<VisitorLook, { outfit: 'kimono' }>,
+): Parts {
+  const body: Piece[] = [
+    {
+      geometry: cylinder(0.155, 0.2, 0.5, 18),
+      color: TOWEL,
+      position: [0, 0.47, 0],
+    },
+    {
+      geometry: cylinder(0.162, 0.162, 0.05, 18),
+      color: TOWEL_FOLD,
+      position: [0, 0.705, 0],
+    },
+    {
+      geometry: box(0.06, 0.09, 0.02),
+      color: TOWEL_FOLD,
+      position: [0.08, 0.665, -0.163],
+      rotation: [0, 0, 0.2],
+    },
+    {
+      geometry: cylinder(0.148, 0.155, 0.06, 18),
+      color: SKIN,
+      position: [0, 0.74, 0],
+    },
+    {
+      geometry: sphere(0.165, 16, 10),
+      color: SKIN,
+      position: [0, 0.765, 0],
+      scale: [1, 0.45, 0.9],
+    },
+    ...head(look.hair, true),
+    {
+      geometry: sphere(0.115, 14, 10),
+      color: look.hair,
+      position: [0, HEAD_Y + 0.2, 0.12],
+    },
+    ...face(true),
+    ...headTowel(),
+  ]
+  const hip = 0.2
+  return {
+    body,
+    leg: bareLeg(hip),
+    arms: [arm(-1, SKIN, 0.062), arm(1, SKIN, 0.062)],
+    hip,
+    shoulder: [0.165, 0.76],
+    legSpread: 0.065,
+  }
+}
+
+/** 온천 차림(남): 맨 상체에 허리 수건만 두르고 맨발, 머리 물수건. */
+function hakamaBathParts(
+  look: Extract<VisitorLook, { outfit: 'hakama' }>,
+): Parts {
+  const body: Piece[] = [
+    {
+      geometry: cylinder(0.158, 0.17, 0.36, 18),
+      color: SKIN,
+      position: [0, 0.62, 0],
+    },
+    {
+      geometry: sphere(0.17, 16, 10),
+      color: SKIN,
+      position: [0, 0.775, 0],
+      scale: [1, 0.45, 0.9],
+    },
+    {
+      geometry: cylinder(0.18, 0.205, 0.24, 18),
+      color: TOWEL,
+      position: [0, 0.4, 0],
+    },
+    {
+      geometry: box(0.1, 0.22, 0.02),
+      color: TOWEL_FOLD,
+      position: [0.1, 0.4, -0.2],
+      rotation: [0, 0, 0.08],
+    },
+    ...head(look.hair, false),
+    ...face(false),
+    ...headTowel(),
+  ]
+  const hip = 0.5
+  return {
+    body,
+    leg: bareLeg(hip),
+    arms: [arm(-1, SKIN, 0.064), arm(1, SKIN, 0.064)],
+    hip,
+    shoulder: [0.17, 0.77],
+    legSpread: 0.085,
+  }
+}
+
 type Baked = {
   material: MeshStandardMaterial
   body: BufferGeometry
@@ -529,11 +667,18 @@ type Baked = {
 const bakedLooks = new Map<string, Baked>()
 
 /** 같은 차림끼리는 구운 도형과 재질을 함께 쓴다. */
-function bakedLook(look: VisitorLook): Baked {
-  const key = JSON.stringify(look)
+function bakedLook(look: VisitorLook, bathing = false): Baked {
+  const key = JSON.stringify(look) + (bathing ? ':bath' : '')
   const existing = bakedLooks.get(key)
   if (existing) return existing
-  const parts = look.outfit === 'kimono' ? kimonoParts(look) : hakamaParts(look)
+  const parts =
+    look.outfit === 'kimono'
+      ? bathing
+        ? kimonoBathParts(look)
+        : kimonoParts(look)
+      : bathing
+        ? hakamaBathParts(look)
+        : hakamaParts(look)
   const result: Baked = {
     material: new MeshStandardMaterial({
       map: clothTexture(look),
@@ -642,12 +787,15 @@ export function VisitorModel({
   look,
   motion,
   pose = 'stand',
+  bathing = false,
 }: {
   look: VisitorLook
   motion?: RefObject<number>
   pose?: VisitorPose
+  /** 온천 안: 목욕 차림(여 전신 수건 가운, 남 허리 수건)과 머리 물수건. */
+  bathing?: boolean
 }) {
-  const model = bakedLook(look)
+  const model = bakedLook(look, bathing)
   const legs = useRef<(Group | null)[]>([])
   const arms = useRef<(Group | null)[]>([])
   const body = useRef<Group>(null)

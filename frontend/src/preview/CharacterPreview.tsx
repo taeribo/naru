@@ -128,6 +128,7 @@ function Preview() {
   const [walking, setWalking] = useState(true)
   const [spin, setSpin] = useState(false)
   const [poseIndex, setPoseIndex] = useState(0)
+  const [bathing, setBathing] = useState(false)
   const [round, setRound] = useState(0)
   const pose = POSES[poseIndex].pose
   // 국자 동작은 한 번 하고 끝나므로 3.5초마다 처음부터 다시 보여 준다.
@@ -177,6 +178,7 @@ function Preview() {
               look={look}
               motion={motion}
               pose={pose}
+              bathing={bathing}
             />
           </Turntable>
         ))}
@@ -202,6 +204,10 @@ function Preview() {
             on: () => setWalking(!walking),
           },
           { label: spin ? '회전 멈춤' : '돌려 보기', on: () => setSpin(!spin) },
+          {
+            label: bathing ? '평상복 보기' : '온천 차림 보기',
+            on: () => setBathing(!bathing),
+          },
           {
             label: `자세: ${POSES[poseIndex].label}`,
             on: () => setPoseIndex((poseIndex + 1) % POSES.length),

@@ -1,12 +1,16 @@
 import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { Group } from 'three'
 import type { WorldPlayer } from '../services/world'
 import { COURTYARD, groundHeight } from './terrain'
 import { VisitorModel, lookFor } from './VisitorModel'
 import type { Snack } from './OnsenTamago'
 import { nicknamesFor } from './nickname'
+import { insideBath, isBathing, onsenGround } from './onsenEntry'
+
+/** 탕 안에서 이만큼(초) 가만히 있으면 물속에 앉아 몸을 담근다. */
+const SOAK_AFTER = 0.8
 
 /** 이름표가 또렷이 보이는 거리와 사라지는 거리. */
 const TAG_NEAR = 9
@@ -32,6 +36,10 @@ function Visitor({
   const look = useMemo(() => lookFor(player.id), [player.id])
   // 걷기 세기(0~1). 실제로 움직인 거리로 정해 팔다리 흔들림에 쓴다.
   const motion = useRef(0)
+  const still = useRef(0)
+  const [soaking, setSoaking] = useState(false)
+  // 탕 안(테두리를 넘는 디딤판부터)에서는 목욕 차림으로 갈아입는다.
+  const bathing = isBathing(player.x, player.z)
 
   useFrame(({ camera }, delta) => {
     if (!group.current) return
@@ -60,11 +68,16 @@ function Visitor({
     const pace = Math.min(1, (Math.hypot(dx, dz) * blend) / delta / 2.2)
     motion.current += (pace - motion.current) * Math.min(1, delta * 10)
     if (motion.current < 0.02) motion.current = 0
-    // 계단을 오르내릴 때 높이가 툭툭 튀지 않게 부드럽게 따라간다.
+    // 계단·온천 돌계단을 오르내릴 때 높이가 툭툭 튀지 않게 부드럽게 따라간다.
+    const { x, z } = group.current.position
     group.current.position.y +=
-      (groundHeight(group.current.position.x, group.current.position.z) -
+      (Math.max(groundHeight(x, z), onsenGround(x, z)) -
         group.current.position.y) *
       blend
+    // 탕 안에서 멈춰 있으면 물속에 앉아 쉬고, 움직이면 일어난다.
+    still.current = motion.current === 0 ? still.current + delta : 0
+    const soak = still.current > SOAK_AFTER && insideBath(x, z, 0.95)
+    if (soak !== soaking) setSoaking(soak)
     // 멀리 있는 사람의 이름표는 흐려지다 사라진다. 내 이름표는 늘 보인다.
     if (tag.current && !own) {
       const distance = camera.position.distanceTo(group.current.position)
@@ -80,7 +93,8 @@ function Visitor({
       <VisitorModel
         look={look}
         motion={motion}
-        pose={snack?.arrived ? snack.pose : 'stand'}
+        pose={snack?.arrived ? snack.pose : soaking ? 'sit' : 'stand'}
+        bathing={bathing}
       />
       <Html position-y={1.72} center zIndexRange={[1, 0]}>
         <span
@@ -90,7 +104,7 @@ function Visitor({
           {nickname}
         </span>
       </Html>
-      {own && !(snack?.arrived && snack.spot.y > 0.1) && (
+      {own && !bathing && !(snack?.arrived && snack.spot.y > 0.1) && (
         <mesh rotation-x={-Math.PI / 2} position-y={0.025}>
           <ringGeometry args={[0.37, 0.43, 22]} />
           <meshBasicMaterial color="#ffe2a2" />
