@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { KeyboardEvent, PointerEvent } from 'react'
+import type { PointerEvent } from 'react'
 
 /** 화면 기준 이동 방향. x는 오른쪽, y는 아래쪽이 양수이고 길이는 0~1(세기). */
 export type PlazaVector = { x: number; y: number }
@@ -15,6 +15,10 @@ const KEY_VECTORS: Record<string, PlazaVector> = {
   ArrowDown: { x: 0, y: 1 },
   ArrowLeft: { x: -1, y: 0 },
   ArrowRight: { x: 1, y: 0 },
+  KeyW: { x: 0, y: -1 },
+  KeyS: { x: 0, y: 1 },
+  KeyA: { x: -1, y: 0 },
+  KeyD: { x: 1, y: 0 },
 }
 
 export function PlazaMovement({
@@ -38,6 +42,69 @@ export function PlazaMovement({
   }
 
   useEffect(() => stop, [disabled])
+
+  useEffect(() => {
+    if (disabled) return
+
+    const pressed = new Set<string>()
+    let timer: number | undefined
+
+    function clear() {
+      pressed.clear()
+      window.clearInterval(timer)
+      timer = undefined
+    }
+
+    function stepKeys() {
+      if (hold.current) return
+      let x = 0
+      let y = 0
+      for (const code of pressed) {
+        x += KEY_VECTORS[code].x
+        y += KEY_VECTORS[code].y
+      }
+      const length = Math.hypot(Math.sign(x), Math.sign(y))
+      if (length)
+        move.current({ x: Math.sign(x) / length, y: Math.sign(y) / length })
+    }
+
+    function keyDown(event: KeyboardEvent) {
+      if (
+        !Object.hasOwn(KEY_VECTORS, event.code) ||
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.metaKey ||
+        (event.target instanceof HTMLElement &&
+          (event.target.isContentEditable ||
+            event.target.closest('input, textarea, select, dialog[open]')))
+      )
+        return
+
+      event.preventDefault()
+      if (event.repeat || pressed.has(event.code)) return
+      pressed.add(event.code)
+      stepKeys()
+      timer ??= window.setInterval(stepKeys, REPEAT_MS)
+    }
+
+    function keyUp(event: KeyboardEvent) {
+      if (pressed.delete(event.code) && pressed.size === 0) clear()
+    }
+
+    window.addEventListener('keydown', keyDown)
+    window.addEventListener('keyup', keyUp)
+    window.addEventListener('blur', clear)
+    document.addEventListener('visibilitychange', clear)
+    return () => {
+      clear()
+      window.removeEventListener('keydown', keyDown)
+      window.removeEventListener('keyup', keyUp)
+      window.removeEventListener('blur', clear)
+      document.removeEventListener('visibilitychange', clear)
+    }
+  }, [disabled])
 
   function aim(event: PointerEvent<HTMLDivElement>) {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -76,18 +143,11 @@ export function PlazaMovement({
     if (hold.current?.pointer === event.pointerId) stop()
   }
 
-  function nudge(event: KeyboardEvent<HTMLDivElement>) {
-    const direction = KEY_VECTORS[event.key]
-    if (disabled || !direction) return
-    event.preventDefault()
-    move.current(direction)
-  }
-
   return (
     <div
       className="plaza-joystick"
       role="application"
-      aria-label="이동 조이스틱. 끌거나 방향키로 이동"
+      aria-label="이동 조이스틱. 끌거나 WASD 또는 방향키로 이동"
       aria-disabled={disabled}
       tabIndex={disabled ? -1 : 0}
       data-active={knob !== null}
@@ -98,7 +158,6 @@ export function PlazaMovement({
       onPointerUp={end}
       onPointerCancel={end}
       onLostPointerCapture={end}
-      onKeyDown={nudge}
     >
       <span className="plaza-joystick-ring" aria-hidden="true" />
       <span className="plaza-joystick-tick" data-side="up" aria-hidden="true">
